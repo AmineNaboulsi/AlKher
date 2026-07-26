@@ -30,8 +30,12 @@ export function FeaturedProducts() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map((product) => (
-            <ProductCard key={product.slug} product={product} />
+          {featured.map((product, index) => (
+            <ProductCard
+              key={product.slug}
+              product={product}
+              eager={index === 0}
+            />
           ))}
         </div>
 

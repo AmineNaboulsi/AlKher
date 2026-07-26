@@ -15,9 +15,11 @@ import { ShoppingCart } from "lucide-react";
 type ProductCardProps = {
   product: Product;
   className?: string;
+  /** Set on the first card in a grid — it is usually the LCP element. */
+  eager?: boolean;
 };
 
-export function ProductCard({ product, className }: ProductCardProps) {
+export function ProductCard({ product, className, eager }: ProductCardProps) {
   const { addItem } = useCart();
   const cardRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
@@ -81,6 +83,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             product={product}
             className="aspect-[4/5] w-full"
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+            eager={eager}
           />
           <div className="p-4 space-y-2">
             <div className="flex items-center justify-between gap-2">

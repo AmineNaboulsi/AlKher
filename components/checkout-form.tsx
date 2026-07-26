@@ -17,9 +17,9 @@ import { ProductImage } from "@/components/product-image";
 import { cn } from "@/lib/utils";
 
 type CheckoutConfig = {
-  cities: { name: string; deliveryFeeMAD: number }[];
+  cities: string[];
   defaultCity: string;
-  freeDeliveryThresholdMAD: number;
+  deliveryFeeMAD: number;
   paymentMethod: { id: string; label: string; note: string };
 };
 
@@ -69,10 +69,7 @@ export function CheckoutForm() {
     };
   }, []);
 
-  const selectedCity = config?.cities.find((c) => c.name === city);
-  const freeDelivery =
-    config != null && subtotal >= config.freeDeliveryThresholdMAD;
-  const deliveryFee = freeDelivery ? 0 : selectedCity?.deliveryFeeMAD ?? 0;
+  const deliveryFee = config?.deliveryFeeMAD ?? 0;
   const total = subtotal + deliveryFee;
 
   const lines = useMemo(
@@ -200,11 +197,7 @@ export function CheckoutForm() {
           <div className="flex justify-between">
             <dt className="text-ink-muted">التوصيل</dt>
             <dd>
-              {placed.deliveryFeeMAD === 0 ? (
-                <span className="text-mint">مجاني</span>
-              ) : (
-                <Price amount={placed.deliveryFeeMAD} />
-              )}
+              <Price amount={placed.deliveryFeeMAD} />
             </dd>
           </div>
           <div className="flex justify-between border-t brass-hairline pt-2 font-semibold">
@@ -320,8 +313,8 @@ export function CheckoutForm() {
             >
               {!config && <option value="">جارٍ تحميل المدن…</option>}
               {config?.cities.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name}
+                <option key={c} value={c}>
+                  {c}
                 </option>
               ))}
             </select>
@@ -445,12 +438,10 @@ export function CheckoutForm() {
           <div className="flex justify-between">
             <dt className="text-ink-muted">التوصيل {city && `— ${city}`}</dt>
             <dd>
-              {!config ? (
-                <span className="text-ink-muted text-xs">…</span>
-              ) : deliveryFee === 0 ? (
-                <span className="text-mint">مجاني</span>
-              ) : (
+              {config ? (
                 <Price amount={deliveryFee} />
+              ) : (
+                <span className="text-ink-muted text-xs">…</span>
               )}
             </dd>
           </div>
@@ -462,12 +453,11 @@ export function CheckoutForm() {
           </div>
         </dl>
 
-        {config && !freeDelivery && (
+        {config && (
           <p className="flex items-start gap-2 text-xs text-ink-muted">
             <Truck className="h-4 w-4 shrink-0 mt-px" />
-            التوصيل مجاني للطلبات من{" "}
-            <span dir="ltr">{config.freeDeliveryThresholdMAD} د.م.</span> فما
-            فوق.
+            التوصيل <span dir="ltr">{config.deliveryFeeMAD} د.م.</span> إلى كل
+            المدن.
           </p>
         )}
       </aside>

@@ -70,10 +70,13 @@ cp .env.example .env.local
 Without `MONGODB_URI` the site still browses fine, but `POST /api/orders`
 answers `503` and the checkout form shows "خدمة الطلبات غير مهيّأة حالياً".
 
-| Endpoint                | Method | Purpose                                                          |
-| ----------------------- | ------ | ---------------------------------------------------------------- |
-| `/api/checkout/config`  | GET    | Predefined delivery cities + fees, default city, payment method   |
-| `/api/orders`           | POST   | Validates name/city/phone, reprices from the catalogue, saves     |
+Delivery is a flat **10 د.م.** to every city (`DELIVERY_FEE_MAD` in
+`lib/checkout-config.ts`).
+
+| Endpoint               | Method | Purpose                                                       |
+| ---------------------- | ------ | ------------------------------------------------------------- |
+| `/api/checkout/config` | GET    | Predefined city list, default city, delivery fee, payment method |
+| `/api/orders`          | POST   | Validates name/city/phone, reprices from the catalogue, saves  |
 
 Orders land in the `orders` collection:
 
@@ -90,12 +93,8 @@ Orders land in the `orders` collection:
 ```
 
 The client never sends prices — the API recomputes every amount from
-`lib/products.ts` and `lib/checkout-config.ts`, so a tampered request cannot
-change what an order costs.
-
-**Before taking live orders:** the per-city delivery fees and the
-300 د.م. free-delivery threshold in `lib/checkout-config.ts` are placeholders.
-Replace them with your real rates.
+`lib/products.ts`, `lib/promos.ts` and `lib/checkout-config.ts`, so a tampered
+request cannot change what an order costs.
 
 ## Learn More
 

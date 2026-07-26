@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { getProductBySlug, isVariantInStock } from "@/lib/products";
 import {
-  deliveryFeeFor,
-  findCity,
+  deliveryFee,
+  isKnownCity,
   normalisePhone,
   PAYMENT_METHOD,
 } from "@/lib/checkout-config";
@@ -72,8 +72,7 @@ export async function POST(request: Request) {
   }
 
   const cityName = typeof body.city === "string" ? body.city.trim() : "";
-  const city = findCity(cityName);
-  if (!city) {
+  if (!isKnownCity(cityName)) {
     fields.city = "المرجو اختيار مدينة من القائمة.";
   }
 
@@ -138,13 +137,13 @@ export async function POST(request: Request) {
     }))
   );
   const subtotalMAD = pricing.subtotalMAD;
-  const deliveryFeeMAD = deliveryFeeFor(city!, subtotalMAD);
+  const deliveryFeeMAD = deliveryFee();
 
   const order: OrderDocument = {
     orderNumber: createOrderNumber(),
     status: "pending",
     paymentMethod: PAYMENT_METHOD.id,
-    customer: { fullName, phone: phone!, city: city!.name },
+    customer: { fullName, phone: phone!, city: cityName },
     items,
     appliedPromos: pricing.appliedPromos,
     fullPriceMAD: pricing.fullPriceMAD,

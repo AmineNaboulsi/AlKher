@@ -2,47 +2,39 @@
  * Server-side source of truth for checkout options. The client never sends
  * prices or fees — it only sends a city name, which is validated against this
  * list, and the API recomputes every amount from here plus the catalogue.
- *
- * NOTE: the delivery fees below are placeholders. Replace them with the real
- * per-city rates before taking live orders.
  */
 
-export type DeliveryCity = {
-  name: string;
-  deliveryFeeMAD: number;
-};
+/** Flat delivery charge — same for every city, every order size. */
+export const DELIVERY_FEE_MAD = 10;
 
-export const CITIES: DeliveryCity[] = [
-  { name: "الدار البيضاء", deliveryFeeMAD: 10 },
-  { name: "الرباط", deliveryFeeMAD: 25 },
-  { name: "سلا", deliveryFeeMAD: 25 },
-  { name: "القنيطرة", deliveryFeeMAD: 25 },
-  { name: "مراكش", deliveryFeeMAD: 25 },
-  { name: "فاس", deliveryFeeMAD: 25 },
-  { name: "مكناس", deliveryFeeMAD: 25 },
-  { name: "طنجة", deliveryFeeMAD: 30 },
-  { name: "تطوان", deliveryFeeMAD: 30 },
-  { name: "أكادير", deliveryFeeMAD: 30 },
-  { name: "آسفي", deliveryFeeMAD: 30 },
-  { name: "الجديدة", deliveryFeeMAD: 30 },
-  { name: "بني ملال", deliveryFeeMAD: 30 },
-  { name: "خريبكة", deliveryFeeMAD: 30 },
-  { name: "الصويرة", deliveryFeeMAD: 35 },
-  { name: "تازة", deliveryFeeMAD: 35 },
-  { name: "وجدة", deliveryFeeMAD: 35 },
-  { name: "الناظور", deliveryFeeMAD: 35 },
-  { name: "ورزازات", deliveryFeeMAD: 40 },
-  { name: "الرشيدية", deliveryFeeMAD: 40 },
-  { name: "العيون", deliveryFeeMAD: 45 },
-  { name: "السمارة", deliveryFeeMAD: 50 },
-  { name: "بوجدور", deliveryFeeMAD: 50 },
-  { name: "الداخلة", deliveryFeeMAD: 55 },
+export const CITIES: string[] = [
+  "الدار البيضاء",
+  "الرباط",
+  "سلا",
+  "القنيطرة",
+  "مراكش",
+  "فاس",
+  "مكناس",
+  "طنجة",
+  "تطوان",
+  "أكادير",
+  "آسفي",
+  "الجديدة",
+  "بني ملال",
+  "خريبكة",
+  "الصويرة",
+  "تازة",
+  "وجدة",
+  "الناظور",
+  "ورزازات",
+  "الرشيدية",
+  "العيون",
+  "السمارة",
+  "بوجدور",
+  "الداخلة",
 ];
 
 export const DEFAULT_CITY = "الدار البيضاء";
-
-/** Orders at or above this subtotal ship free. */
-export const FREE_DELIVERY_THRESHOLD_MAD = 300;
 
 export const PAYMENT_METHOD = {
   id: "cod",
@@ -50,12 +42,12 @@ export const PAYMENT_METHOD = {
   note: "تدفع نقداً لموصّل الطلب عند التسليم — لا حاجة لبطاقة بنكية.",
 } as const;
 
-export function findCity(name: string): DeliveryCity | undefined {
-  return CITIES.find((c) => c.name === name);
+export function isKnownCity(name: string): boolean {
+  return CITIES.includes(name);
 }
 
-export function deliveryFeeFor(city: DeliveryCity, subtotalMAD: number): number {
-  return subtotalMAD >= FREE_DELIVERY_THRESHOLD_MAD ? 0 : city.deliveryFeeMAD;
+export function deliveryFee(): number {
+  return DELIVERY_FEE_MAD;
 }
 
 /**

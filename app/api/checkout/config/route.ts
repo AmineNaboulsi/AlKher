@@ -1,7 +1,7 @@
 import {
   CITIES,
   DEFAULT_CITY,
-  FREE_DELIVERY_THRESHOLD_MAD,
+  DELIVERY_FEE_MAD,
   PAYMENT_METHOD,
 } from "@/lib/checkout-config";
 import { SHOW_CATALOG } from "@/lib/site-config";
@@ -22,7 +22,7 @@ export function GET() {
   return Response.json({
     cities: CITIES,
     defaultCity: DEFAULT_CITY,
-    freeDeliveryThresholdMAD: FREE_DELIVERY_THRESHOLD_MAD,
+    deliveryFeeMAD: DELIVERY_FEE_MAD,
     paymentMethod: PAYMENT_METHOD,
   });
 }

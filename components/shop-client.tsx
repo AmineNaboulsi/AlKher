@@ -187,8 +187,12 @@ export function ShopClient({ initialCategory }: ShopClientProps) {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filtered.map((product) => (
-                    <ProductCard key={product.slug} product={product} />
+                  {filtered.map((product, index) => (
+                    <ProductCard
+                      key={product.slug}
+                      product={product}
+                      eager={index === 0}
+                    />
                   ))}
                 </div>
               )}
