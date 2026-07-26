@@ -4,6 +4,7 @@ import {
   FREE_DELIVERY_THRESHOLD_MAD,
   PAYMENT_METHOD,
 } from "@/lib/checkout-config";
+import { SHOW_CATALOG } from "@/lib/site-config";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-static";
 
 export function GET() {
+  if (!SHOW_CATALOG) {
+    return Response.json({ error: "المتجر مغلق حالياً." }, { status: 404 });
+  }
+
   return Response.json({
     cities: CITIES,
     defaultCity: DEFAULT_CITY,

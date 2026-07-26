@@ -14,4 +14,4 @@
  * While this is `false` the site reads as a pre-launch page — hero, story and
  * contact only — and `/shop` plus `/product/*` return 404.
  */
-export const SHOW_CATALOG = false;
+export const SHOW_CATALOG = true;
