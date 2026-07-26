@@ -16,3 +16,13 @@
  */
 export const SHOW_CATALOG = true;
 
+/**
+ * Show category surfaces: the "تصفّح حسب النوع" strip on the homepage, the
+ * category filter in the shop sidebar, and the category badge on product cards
+ * and product pages.
+ *
+ * Independent of {@link SHOW_CATALOG} — with the catalogue on and this off,
+ * products list and sell exactly as normal, they just aren't grouped or
+ * labelled by type. Products keep their `category` field either way.
+ */
+export const SHOW_CATEGORIES = false;

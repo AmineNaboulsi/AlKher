@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Price } from "@/components/price";
 import { ProductImage } from "@/components/product-image";
 import { cn } from "@/lib/utils";
+import { SHOW_CATEGORIES } from "@/lib/site-config";
 import { ShoppingCart } from "lucide-react";
 
 type ProductCardProps = {
@@ -87,7 +88,9 @@ export function ProductCard({ product, className, eager }: ProductCardProps) {
           />
           <div className="p-4 space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Badge variant="outline">{product.category}</Badge>
+              {SHOW_CATEGORIES && (
+                <Badge variant="outline">{product.category}</Badge>
+              )}
               {canOrder ? (
                 <Badge variant="mint">متوفر</Badge>
               ) : (

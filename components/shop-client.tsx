@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { SHOW_CATEGORIES } from "@/lib/site-config";
 
 type ShopClientProps = {
   initialCategory?: string;
@@ -38,7 +39,11 @@ function getLowestPrice(p: Product) {
 }
 
 export function ShopClient({ initialCategory }: ShopClientProps) {
-  const [category, setCategory] = useState<string>(initialCategory ?? "all");
+  // With categories hidden there is no way to change this, and a stale
+  // ?category= link must not silently filter the listing down.
+  const [category, setCategory] = useState<string>(
+    SHOW_CATEGORIES ? initialCategory ?? "all" : "all"
+  );
   const [sort, setSort] = useState<SortOption>("newest");
   const [inStockOnly, setInStockOnly] = useState(false);
   const [maxPrice, setMaxPrice] = useState(MAX_PRICE);
@@ -97,36 +102,38 @@ export function ShopClient({ initialCategory }: ShopClientProps) {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Filters sidebar */}
             <aside className="lg:w-56 shrink-0 space-y-6">
-              <div>
-                <h2 className="text-sm font-semibold mb-3">الفئة</h2>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="radio"
-                      name="category"
-                      checked={category === "all"}
-                      onChange={() => setCategory("all")}
-                      className="accent-brass"
-                    />
-                    الكل
-                  </label>
-                  {CATEGORIES.map((cat) => (
-                    <label
-                      key={cat}
-                      className="flex items-center gap-2 text-sm cursor-pointer"
-                    >
+              {SHOW_CATEGORIES && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-3">الفئة</h2>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="radio"
                         name="category"
-                        checked={category === cat}
-                        onChange={() => setCategory(cat)}
+                        checked={category === "all"}
+                        onChange={() => setCategory("all")}
                         className="accent-brass"
                       />
-                      {cat}
+                      الكل
                     </label>
-                  ))}
+                    {CATEGORIES.map((cat) => (
+                      <label
+                        key={cat}
+                        className="flex items-center gap-2 text-sm cursor-pointer"
+                      >
+                        <input
+                          type="radio"
+                          name="category"
+                          checked={category === cat}
+                          onChange={() => setCategory(cat)}
+                          className="accent-brass"
+                        />
+                        {cat}
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <h2 className="text-sm font-semibold mb-3">

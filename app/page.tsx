@@ -4,7 +4,7 @@ import { FeaturedProducts } from "@/components/featured-products";
 import { PromoSection } from "@/components/promo-section";
 import { StorySection } from "@/components/story-section";
 import { Footer } from "@/components/footer";
-import { SHOW_CATALOG } from "@/lib/site-config";
+import { SHOW_CATALOG, SHOW_CATEGORIES } from "@/lib/site-config";
 
 export default function Home() {
   return (
@@ -12,7 +12,7 @@ export default function Home() {
       <HeroSection />
       {SHOW_CATALOG && (
         <>
-          <CategoryStrip />
+          {SHOW_CATEGORIES && <CategoryStrip />}
           <FeaturedProducts />
           <PromoSection />
         </>

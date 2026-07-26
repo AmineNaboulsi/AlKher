@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ZelligeDivider } from "@/components/zellige-divider";
 import { Footer } from "@/components/footer";
+import { SHOW_CATEGORIES } from "@/lib/site-config";
 
 type ProductDetailProps = {
   product: Product;
@@ -65,7 +66,9 @@ export function ProductDetail({ product }: ProductDetailProps) {
             {/* Details */}
             <div className="space-y-6 text-start">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{product.category}</Badge>
+                {SHOW_CATEGORIES && (
+                  <Badge variant="outline">{product.category}</Badge>
+                )}
                 {product.inStock ? (
                   <Badge variant="mint">متوفر</Badge>
                 ) : (

@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { NewsletterForm } from "@/components/newsletter-form";
 import { SHOW_CATALOG } from "@/lib/site-config";
 
 export function Footer() {
   return (
     <footer id="contact" className="border-t brass-hairline bg-surface py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-4">
             <Link
               href="/"
@@ -59,13 +58,6 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h3 className="font-display font-semibold mb-4">النشرة</h3>
-            <p className="text-sm text-ink-muted mb-3">
-              أخبار موسم الحصاد وعروض خاصة
-            </p>
-            <NewsletterForm />
-          </div>
         </div>
 
         <div className="mt-12 pt-8 border-t brass-hairline flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-ink-muted">
