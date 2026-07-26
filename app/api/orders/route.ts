@@ -7,6 +7,7 @@ import {
   PAYMENT_METHOD,
 } from "@/lib/checkout-config";
 import { DatabaseNotConfiguredError, getDb } from "@/lib/mongodb";
+import { SHOW_CATALOG } from "@/lib/site-config";
 import {
   ORDERS_COLLECTION,
   type CreateOrderError,
@@ -36,6 +37,12 @@ function badRequest(body: CreateOrderError, status = 400) {
 type RawItem = { slug?: unknown; weightGrams?: unknown; quantity?: unknown };
 
 export async function POST(request: Request) {
+  // Ordering is closed while the catalogue is hidden — otherwise the endpoint
+  // would still accept orders for products no one can browse.
+  if (!SHOW_CATALOG) {
+    return badRequest({ error: "المتجر مغلق حالياً." }, 404);
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();

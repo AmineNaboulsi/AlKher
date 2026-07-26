@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { CheckoutForm } from "@/components/checkout-form";
 import { Footer } from "@/components/footer";
+import { SHOW_CATALOG } from "@/lib/site-config";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -10,6 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default function CheckoutPage() {
+  if (!SHOW_CATALOG) notFound();
+
   return (
     <>
       <div className="pt-24 pb-12 sm:pt-28 min-h-[60vh]">

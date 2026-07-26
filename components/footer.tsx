@@ -23,21 +23,25 @@ export function Footer() {
           <div>
             <h3 className="font-display font-semibold mb-4">روابط</h3>
             <ul className="space-y-2 text-sm text-ink-muted">
-              <li>
-                <Link href="/shop" className="hover:text-ink transition-colors">
-                  المتجر
-                </Link>
-              </li>
+              {SHOW_CATALOG && (
+                <li>
+                  <Link href="/shop" className="hover:text-ink transition-colors">
+                    المتجر
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/#story" className="hover:text-ink transition-colors">
                   قصتنا
                 </Link>
               </li>
-              <li>
-                <Link href="/cart" className="hover:text-ink transition-colors">
-                  السلة
-                </Link>
-              </li>
+              {SHOW_CATALOG && (
+                <li>
+                  <Link href="/cart" className="hover:text-ink transition-colors">
+                    السلة
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SHOW_CATALOG } from "@/lib/site-config";
 import { HeroVideo } from "./hero-video";
 
 export function HeroSection() {
@@ -24,34 +25,46 @@ export function HeroSection() {
             يعرفه البراد المغربي.
           </p>
           <div className="flex flex-wrap gap-4 pt-2">
-            <Button asChild variant="brass" size="lg">
-              <Link href="/shop">تسوق الآن</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
+            {SHOW_CATALOG && (
+              <Button asChild variant="brass" size="lg">
+                <Link href="/shop">تسوق الآن</Link>
+              </Button>
+            )}
+            <Button
+              asChild
+              variant={SHOW_CATALOG ? "outline" : "brass"}
+              size="lg"
+            >
               <Link href="/#story">اكتشف قصتنا</Link>
             </Button>
           </div>
 
-          <dl className="flex flex-wrap gap-x-8 gap-y-3 pt-4 text-sm">
-            <div>
-              <dt className="text-ink-muted">أرخص عبوة</dt>
-              <dd className="font-display text-lg font-semibold text-brass">
-                <span dir="ltr">20 د.م.</span>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-ink-muted">أكبر عبوة</dt>
-              <dd className="font-display text-lg font-semibold text-brass">
-                <span dir="ltr">500g</span>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-ink-muted">الأنواع</dt>
-              <dd className="font-display text-lg font-semibold text-brass">
-                4
-              </dd>
-            </div>
-          </dl>
+          {SHOW_CATALOG ? (
+            <dl className="flex flex-wrap gap-x-8 gap-y-3 pt-4 text-sm">
+              <div>
+                <dt className="text-ink-muted">أرخص عبوة</dt>
+                <dd className="font-display text-lg font-semibold text-brass">
+                  <span dir="ltr">20 د.م.</span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-ink-muted">أكبر عبوة</dt>
+                <dd className="font-display text-lg font-semibold text-brass">
+                  <span dir="ltr">500g</span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-ink-muted">الأنواع</dt>
+                <dd className="font-display text-lg font-semibold text-brass">
+                  4
+                </dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="pt-2 text-sm font-medium text-brass">
+              المتجر الإلكتروني يفتح قريباً — تواصل معنا للطلب حالياً.
+            </p>
+          )}
         </div>
 
         <div className="relative">

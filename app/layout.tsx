@@ -3,6 +3,7 @@ import { Reem_Kufi, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { CartProvider } from "@/lib/cart-context";
 import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
+import { SHOW_CATALOG } from "@/lib/site-config";
 import "./globals.css";
 
 const display = Reem_Kufi({
@@ -38,7 +39,7 @@ export default function RootLayout({
       <body className="min-h-dvh bg-background text-ink font-body">
         <CartProvider>
           <Header />
-          <CartDrawer />
+          {SHOW_CATALOG && <CartDrawer />}
           <main>{children}</main>
         </CartProvider>
       </body>
