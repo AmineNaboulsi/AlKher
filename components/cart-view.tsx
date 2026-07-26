@@ -9,7 +9,8 @@ import { Price } from "@/components/price";
 import { Button } from "@/components/ui/button";
 
 export function CartView() {
-  const { items, updateQuantity, removeItem, subtotal, clearCart } = useCart();
+  const { items, updateQuantity, removeItem, subtotal, pricing, clearCart } =
+    useCart();
 
   return (
     <div className="pt-24 pb-12 sm:pt-28 min-h-[60vh]">
@@ -126,6 +127,41 @@ export function CartView() {
             </ul>
 
             <div className="rounded-lg border brass-hairline bg-surface p-6 space-y-4">
+              {pricing.appliedPromos.length > 0 && (
+                <div className="space-y-2 rounded-md bg-clay/5 p-3">
+                  {pricing.appliedPromos.map((promo) => (
+                    <div
+                      key={promo.promoId}
+                      className="flex justify-between gap-2 text-sm"
+                    >
+                      <span className="text-clay">
+                        عرض: {promo.name}
+                        {promo.times > 1 && (
+                          <span dir="ltr"> ×{promo.times}</span>
+                        )}
+                      </span>
+                      <Price amount={promo.totalMAD} className="text-clay" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {pricing.discountMAD > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink-muted">قبل العرض</span>
+                    <Price
+                      amount={pricing.fullPriceMAD}
+                      className="text-ink-muted line-through"
+                    />
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-clay">وفّرت</span>
+                    <Price amount={pricing.discountMAD} className="text-clay" />
+                  </div>
+                </>
+              )}
+
               <div className="flex justify-between text-sm">
                 <span className="text-ink-muted">المجموع الفرعي</span>
                 <Price amount={subtotal} />

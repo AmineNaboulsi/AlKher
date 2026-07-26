@@ -8,7 +8,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { products, type Product, type WeightGrams } from "./products";
+import { type Product, type WeightGrams } from "./products";
+import { priceCart, type PricedCart, type Promo } from "./promos";
 
 export type CartItem = {
   productSlug: string;
@@ -23,6 +24,8 @@ type CartContextValue = {
     weightGrams: WeightGrams,
     quantity?: number
   ) => void;
+  /** Adds every item a bundle offer requires, so the offer price kicks in. */
+  addPromo: (promo: Promo, quantity?: number) => void;
   removeItem: (productSlug: string, weightGrams: number) => void;
   updateQuantity: (
     productSlug: string,
@@ -31,7 +34,9 @@ type CartContextValue = {
   ) => void;
   clearCart: () => void;
   itemCount: number;
+  /** Promo-aware subtotal — matches what `/api/orders` will charge. */
   subtotal: number;
+  pricing: PricedCart;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -97,6 +102,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const addPromo = useCallback((promo: Promo, quantity = 1) => {
+    setItems((prev) => {
+      const next = [...prev];
+      for (const required of promo.items) {
+        const add = required.quantity * quantity;
+        const index = next.findIndex(
+          (i) =>
+            i.productSlug === required.slug &&
+            i.weightGrams === required.weightGrams
+        );
+        if (index >= 0) {
+          next[index] = { ...next[index], quantity: next[index].quantity + add };
+        } else {
+          next.push({
+            productSlug: required.slug,
+            weightGrams: required.weightGrams,
+            quantity: add,
+          });
+        }
+      }
+      return next;
+    });
+    setIsOpen(true);
+  }, []);
+
   const removeItem = useCallback(
     (productSlug: string, weightGrams: number) => {
       setItems((prev) =>
@@ -133,23 +163,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [items]
   );
 
-  const subtotal = useMemo(() => {
-    return items.reduce((sum, item) => {
-      const product = products.find((p) => p.slug === item.productSlug);
-      if (!product) return sum;
-      return sum + getItemPrice(product, item.weightGrams) * item.quantity;
-    }, 0);
-  }, [items]);
+  // Bundle offers are matched against cart contents, so the subtotal has to go
+  // through the same pricing function the orders API uses.
+  const pricing = useMemo(
+    () =>
+      priceCart(
+        items.map((i) => ({
+          slug: i.productSlug,
+          weightGrams: i.weightGrams,
+          quantity: i.quantity,
+        }))
+      ),
+    [items]
+  );
+
+  const subtotal = pricing.subtotalMAD;
 
   const value = useMemo(
     () => ({
       items,
       addItem,
+      addPromo,
       removeItem,
       updateQuantity,
       clearCart,
       itemCount,
       subtotal,
+      pricing,
       isOpen,
       openCart: () => setIsOpen(true),
       closeCart: () => setIsOpen(false),
@@ -157,11 +197,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [
       items,
       addItem,
+      addPromo,
       removeItem,
       updateQuantity,
       clearCart,
       itemCount,
       subtotal,
+      pricing,
       isOpen,
     ]
   );

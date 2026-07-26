@@ -20,6 +20,43 @@ Open [http://localhost:3001](http://localhost:3001) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Catalogue flag
+
+`lib/site-config.ts` has one static switch:
+
+```ts
+export const SHOW_CATALOG = false;
+```
+
+While it is `false` the site is a pre-launch page — hero, story and contact
+only. `/shop`, `/product/*`, `/cart` and `/checkout` return 404, and both
+checkout endpoints answer 404 so no order can be placed. Flip it to `true` and
+rebuild to open the store.
+
+## Bundle offers
+
+Offers live in `lib/promos.ts`. Each one lists the items it requires and a fixed
+bundle price:
+
+| Offer            | Contents                                          | Price | Saving |
+| ---------------- | ------------------------------------------------- | ----- | ------ |
+| `duo-las-palmas` | 2 × Las Palmas 500g                               | 90    | 10     |
+| `trio-200g`      | Smara + بيت الفخامة + الساقية الحمراء (200g each) | 50    | 13     |
+
+Pricing is by **basket matching**, not a coupon code: `priceCart()` greedily
+applies offers best-saving-first and charges the leftovers at unit price. A
+customer gets the offer whether they tap "أضف العرض" or assemble the same
+basket by hand, and loses it if the basket no longer contains the full set. The
+same function runs in the cart UI and in `/api/orders`, which is what keeps the
+displayed total and the charged total identical.
+
+## Stock
+
+`inStock` on a product hides it entirely. Individual sizes can also be closed
+off with `inStock: false` on the variant (see the Las Palmas 200g and 1kg
+entries) — those render struck-through and unselectable, and `/api/orders`
+rejects them server-side.
+
 ## Checkout (cash on delivery)
 
 Orders are stored in MongoDB. Copy `.env.example` to `.env.local` and set a

@@ -13,7 +13,7 @@ export type DeliveryCity = {
 };
 
 export const CITIES: DeliveryCity[] = [
-  { name: "الدار البيضاء", deliveryFeeMAD: 25 },
+  { name: "الدار البيضاء", deliveryFeeMAD: 10 },
   { name: "الرباط", deliveryFeeMAD: 25 },
   { name: "سلا", deliveryFeeMAD: 25 },
   { name: "القنيطرة", deliveryFeeMAD: 25 },

@@ -22,6 +22,7 @@ export function CartDrawer() {
     updateQuantity,
     removeItem,
     subtotal,
+    pricing,
     itemCount,
   } = useCart();
 
@@ -126,6 +127,24 @@ export function CartDrawer() {
             </ul>
 
             <div className="border-t brass-hairline pt-4 space-y-3">
+              {pricing.appliedPromos.map((promo) => (
+                <div
+                  key={promo.promoId}
+                  className="flex justify-between gap-2 text-xs text-clay"
+                >
+                  <span>
+                    عرض: {promo.name}
+                    {promo.times > 1 && <span dir="ltr"> ×{promo.times}</span>}
+                  </span>
+                  <Price amount={promo.totalMAD} />
+                </div>
+              ))}
+              {pricing.discountMAD > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-clay">وفّرت</span>
+                  <Price amount={pricing.discountMAD} className="text-clay" />
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-ink-muted">المجموع الفرعي</span>
                 <Price amount={subtotal} className="font-semibold" />

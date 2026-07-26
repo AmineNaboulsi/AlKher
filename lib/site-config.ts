@@ -15,3 +15,4 @@
  * contact only — and `/shop` plus `/product/*` return 404.
  */
 export const SHOW_CATALOG = true;
+

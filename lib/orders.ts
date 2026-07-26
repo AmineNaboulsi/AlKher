@@ -20,12 +20,25 @@ export type OrderCustomer = {
 
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "cancelled";
 
+/** A bundle offer that matched the basket, as priced by the server. */
+export type OrderPromo = {
+  promoId: string;
+  name: string;
+  times: number;
+  bundlePriceMAD: number;
+  totalMAD: number;
+};
+
 export type OrderDocument = {
   orderNumber: string;
   status: OrderStatus;
   paymentMethod: "cod";
   customer: OrderCustomer;
   items: OrderLine[];
+  appliedPromos: OrderPromo[];
+  /** What the basket would have cost with no offers applied. */
+  fullPriceMAD: number;
+  discountMAD: number;
   subtotalMAD: number;
   deliveryFeeMAD: number;
   totalMAD: number;
@@ -42,6 +55,9 @@ export type CreateOrderRequest = {
 
 export type CreateOrderSuccess = {
   orderNumber: string;
+  appliedPromos: OrderPromo[];
+  fullPriceMAD: number;
+  discountMAD: number;
   subtotalMAD: number;
   deliveryFeeMAD: number;
   totalMAD: number;

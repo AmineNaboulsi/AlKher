@@ -6,9 +6,11 @@ import { ChevronRight } from "lucide-react";
 import {
   products,
   CATEGORIES,
+  isVariantInStock,
   type Product,
 } from "@/lib/products";
 import { ProductCard } from "@/components/product-card";
+import { PromoSection } from "@/components/promo-section";
 import { Footer } from "@/components/footer";
 import { ZelligeDivider } from "@/components/zellige-divider";
 import {
@@ -29,7 +31,10 @@ type SortOption = "newest" | "price-asc" | "price-desc";
 const MAX_PRICE = 60;
 
 function getLowestPrice(p: Product) {
-  return Math.min(...p.variants.map((v) => v.priceMAD));
+  // Sort and filter on sizes a customer can actually order.
+  const orderable = p.variants.filter(isVariantInStock);
+  const shown = orderable.length > 0 ? orderable : p.variants;
+  return Math.min(...shown.map((v) => v.priceMAD));
 }
 
 export function ShopClient({ initialCategory }: ShopClientProps) {
@@ -192,6 +197,7 @@ export function ShopClient({ initialCategory }: ShopClientProps) {
         </div>
       </div>
       <ZelligeDivider variant="compact" />
+      <PromoSection className="pt-0" />
       <Footer />
     </>
   );

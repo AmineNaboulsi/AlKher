@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Minus, Plus, ChevronRight, Star } from "lucide-react";
 import type { Product, WeightGrams } from "@/lib/products";
-import { getRelatedProducts } from "@/lib/products";
+import { getRelatedProducts, isVariantInStock } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
@@ -21,8 +21,9 @@ type ProductDetailProps = {
 
 export function ProductDetail({ product }: ProductDetailProps) {
   const { addItem } = useCart();
+  // Start on a size that can actually be bought.
   const [selectedWeight, setSelectedWeight] = useState<WeightGrams>(
-    product.variants[0].weightGrams
+    (product.variants.find(isVariantInStock) ?? product.variants[0]).weightGrams
   );
   const [quantity, setQuantity] = useState(1);
 
@@ -30,6 +31,8 @@ export function ProductDetail({ product }: ProductDetailProps) {
     (v) => v.weightGrams === selectedWeight
   );
   const price = selectedVariant?.priceMAD ?? 0;
+  const canOrder =
+    product.inStock && selectedVariant != null && isVariantInStock(selectedVariant);
   const related = getRelatedProducts(product);
 
   return (
@@ -108,21 +111,41 @@ export function ProductDetail({ product }: ProductDetailProps) {
               <div>
                 <p className="text-sm font-medium mb-2">الوزن</p>
                 <div className="flex flex-wrap gap-2">
-                  {product.variants.map((v) => (
-                    <button
-                      key={v.weightGrams}
-                      type="button"
-                      onClick={() => setSelectedWeight(v.weightGrams)}
-                      className={`rounded-md border px-4 py-2 text-sm transition-colors ${
-                        selectedWeight === v.weightGrams
-                          ? "border-brass bg-brass/10 text-brass"
-                          : "border-border text-ink-muted hover:border-brass/50"
-                      }`}
-                    >
-                      <span dir="ltr">{v.weightGrams}g</span>
-                    </button>
-                  ))}
+                  {product.variants.map((v) => {
+                    const available = isVariantInStock(v);
+                    return (
+                      <button
+                        key={v.weightGrams}
+                        type="button"
+                        disabled={!available}
+                        onClick={() => setSelectedWeight(v.weightGrams)}
+                        aria-label={
+                          available
+                            ? `${v.weightGrams} غرام`
+                            : `${v.weightGrams} غرام — نفد المخزون`
+                        }
+                        className={`rounded-md border px-4 py-2 text-sm transition-colors ${
+                          !available
+                            ? "border-border text-ink-muted/50 line-through cursor-not-allowed"
+                            : selectedWeight === v.weightGrams
+                              ? "border-brass bg-brass/10 text-brass"
+                              : "border-border text-ink-muted hover:border-brass/50"
+                        }`}
+                      >
+                        <span dir="ltr">
+                          {v.weightGrams >= 1000
+                            ? `${v.weightGrams / 1000}kg`
+                            : `${v.weightGrams}g`}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+                {product.variants.some((v) => !isVariantInStock(v)) && (
+                  <p className="mt-2 text-xs text-ink-muted">
+                    الأحجام المشطوبة نفدت من المخزون حالياً.
+                  </p>
+                )}
               </div>
 
               {/* Quantity */}
@@ -155,10 +178,10 @@ export function ProductDetail({ product }: ProductDetailProps) {
                 variant="brass"
                 size="lg"
                 className="w-full sm:w-auto"
-                disabled={!product.inStock}
+                disabled={!canOrder}
                 onClick={() => addItem(product, selectedWeight, quantity)}
               >
-                {product.inStock ? "أضف إلى السلة" : "غير متوفر حالياً"}
+                {canOrder ? "أضف إلى السلة" : "غير متوفر حالياً"}
               </Button>
 
               <Tabs defaultValue="description" className="pt-4">

@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { getProductBySlug } from "@/lib/products";
+import { getProductBySlug, isVariantInStock } from "@/lib/products";
 import {
   deliveryFeeFor,
   findCity,
@@ -7,6 +7,7 @@ import {
   PAYMENT_METHOD,
 } from "@/lib/checkout-config";
 import { DatabaseNotConfiguredError, getDb } from "@/lib/mongodb";
+import { priceCart } from "@/lib/promos";
 import { SHOW_CATALOG } from "@/lib/site-config";
 import {
   ORDERS_COLLECTION,
@@ -104,6 +105,10 @@ export async function POST(request: Request) {
         fields.items = `${product.name} غير متوفر حالياً.`;
         break;
       }
+      if (!isVariantInStock(variant)) {
+        fields.items = `${product.name} — حجم ${variant.weightGrams} غرام نفد من المخزون.`;
+        break;
+      }
       if (quantity < 1 || quantity > MAX_ITEM_QUANTITY) {
         fields.items = "الكمية المطلوبة غير صحيحة.";
         break;
@@ -124,7 +129,15 @@ export async function POST(request: Request) {
     return badRequest({ error: "المرجو تصحيح المعلومات التالية.", fields });
   }
 
-  const subtotalMAD = items.reduce((sum, i) => sum + i.lineTotalMAD, 0);
+  // Bundle offers are matched here, server-side, from the validated lines.
+  const pricing = priceCart(
+    items.map((i) => ({
+      slug: i.slug,
+      weightGrams: i.weightGrams,
+      quantity: i.quantity,
+    }))
+  );
+  const subtotalMAD = pricing.subtotalMAD;
   const deliveryFeeMAD = deliveryFeeFor(city!, subtotalMAD);
 
   const order: OrderDocument = {
@@ -133,6 +146,9 @@ export async function POST(request: Request) {
     paymentMethod: PAYMENT_METHOD.id,
     customer: { fullName, phone: phone!, city: city!.name },
     items,
+    appliedPromos: pricing.appliedPromos,
+    fullPriceMAD: pricing.fullPriceMAD,
+    discountMAD: pricing.discountMAD,
     subtotalMAD,
     deliveryFeeMAD,
     totalMAD: subtotalMAD + deliveryFeeMAD,
@@ -160,6 +176,9 @@ export async function POST(request: Request) {
   return Response.json(
     {
       orderNumber: order.orderNumber,
+      appliedPromos: order.appliedPromos,
+      fullPriceMAD: order.fullPriceMAD,
+      discountMAD: order.discountMAD,
       subtotalMAD: order.subtotalMAD,
       deliveryFeeMAD: order.deliveryFeeMAD,
       totalMAD: order.totalMAD,

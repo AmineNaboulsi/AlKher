@@ -30,7 +30,7 @@ type Placed = CreateOrderSuccess & {
 };
 
 export function CheckoutForm() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, pricing, clearCart } = useCart();
 
   const [config, setConfig] = useState<CheckoutConfig | null>(null);
   const [configFailed, setConfigFailed] = useState(false);
@@ -172,6 +172,25 @@ export function CheckoutForm() {
         </p>
 
         <dl className="mx-auto max-w-xs space-y-2 text-sm text-start">
+          {placed.appliedPromos.map((promo) => (
+            <div key={promo.promoId} className="flex justify-between gap-2">
+              <dt className="text-clay text-xs">
+                عرض: {promo.name}
+                {promo.times > 1 && <span dir="ltr"> ×{promo.times}</span>}
+              </dt>
+              <dd>
+                <Price amount={promo.totalMAD} className="text-clay text-xs" />
+              </dd>
+            </div>
+          ))}
+          {placed.discountMAD > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-clay">وفّرت</dt>
+              <dd>
+                <Price amount={placed.discountMAD} className="text-clay" />
+              </dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-ink-muted">المجموع الفرعي</dt>
             <dd>
@@ -398,6 +417,25 @@ export function CheckoutForm() {
         </ul>
 
         <dl className="space-y-2 border-t brass-hairline pt-4 text-sm">
+          {pricing.appliedPromos.map((promo) => (
+            <div key={promo.promoId} className="flex justify-between gap-2">
+              <dt className="text-clay text-xs">
+                عرض: {promo.name}
+                {promo.times > 1 && <span dir="ltr"> ×{promo.times}</span>}
+              </dt>
+              <dd>
+                <Price amount={promo.totalMAD} className="text-clay text-xs" />
+              </dd>
+            </div>
+          ))}
+          {pricing.discountMAD > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-clay">وفّرت</dt>
+              <dd>
+                <Price amount={pricing.discountMAD} className="text-clay" />
+              </dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-ink-muted">المجموع الفرعي</dt>
             <dd>

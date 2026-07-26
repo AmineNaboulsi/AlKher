@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useCallback } from "react";
 import type { Product } from "@/lib/products";
+import { isVariantInStock } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,8 +22,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
 
-  const lowestPrice = Math.min(...product.variants.map((v) => v.priceMAD));
-  const defaultWeight = product.variants[0]?.weightGrams ?? 100;
+  // Only advertise sizes a customer can actually order.
+  const orderable = product.variants.filter(isVariantInStock);
+  const shown = orderable.length > 0 ? orderable : product.variants;
+  const lowestPrice = Math.min(...shown.map((v) => v.priceMAD));
+  const defaultWeight = shown[0].weightGrams;
+  const canOrder = product.inStock && orderable.length > 0;
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -80,11 +85,10 @@ export function ProductCard({ product, className }: ProductCardProps) {
           <div className="p-4 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Badge variant="outline">{product.category}</Badge>
-              {!product.inStock && (
-                <Badge variant="muted">نفد المخزون</Badge>
-              )}
-              {product.inStock && (
+              {canOrder ? (
                 <Badge variant="mint">متوفر</Badge>
+              ) : (
+                <Badge variant="muted">نفد المخزون</Badge>
               )}
             </div>
             <h3 className="font-display text-lg font-semibold group-hover:text-brass transition-colors">
@@ -105,7 +109,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </div>
         </Link>
 
-        {product.inStock && (
+        {canOrder && (
           <div className="px-4 pb-4">
             <Button
               variant="secondary"

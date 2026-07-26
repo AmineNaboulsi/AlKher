@@ -2,7 +2,19 @@ export const CATEGORIES = ["شنمي", "أخضر فاخر", "أخضر صيني"]
 
 export type Category = (typeof CATEGORIES)[number];
 
-export type WeightGrams = 50 | 100 | 200 | 250 | 500;
+export type WeightGrams = 50 | 100 | 200 | 250 | 500 | 1000;
+
+export type Variant = {
+  weightGrams: WeightGrams;
+  priceMAD: number;
+  /** Defaults to true. Set false to list the size but block ordering it. */
+  inStock?: boolean;
+};
+
+/** A variant is orderable unless it says otherwise. */
+export function isVariantInStock(variant: Variant): boolean {
+  return variant.inStock !== false;
+}
 
 export type Product = {
   slug: string;
@@ -17,7 +29,7 @@ export type Product = {
     steepMinutes: number;
     notes: string;
   };
-  variants: { weightGrams: WeightGrams; priceMAD: number }[];
+  variants: Variant[];
   images: string[];
   rating?: number;
   reviewCount?: number;
@@ -40,8 +52,14 @@ export const products: Product[] = [
       notes:
         "اغسل الأوراق بماء ساخن وارمِ أول ماء، ثم اترك البراد على النار حتى يغلي، وصبّ من علوّ لإظهار الرغوة.",
     },
-    variants: [{ weightGrams: 500, priceMAD: 50 }],
-    images: ["/products/palmas.jpg"],
+    variants: [
+      { weightGrams: 500, priceMAD: 50 },
+      // TODO: confirm the real prices before these come back in stock —
+      // the figures below are scaled from the 500g box, not quoted.
+      { weightGrams: 200, priceMAD: 22, inStock: false },
+      { weightGrams: 1000, priceMAD: 95, inStock: false },
+    ],
+    images: ["/products/palmas-single.jpeg"],
     inStock: true,
   },
   {
@@ -60,7 +78,7 @@ export const products: Product[] = [
         "ملعقة كبيرة لكل براد. أضف النعناع بعد الغلي لا قبله حتى لا يمرّ طعمه.",
     },
     variants: [{ weightGrams: 200, priceMAD: 20 }],
-    images: ["/products/sakiya.jpg"],
+    images: ["/products/sakiya-single.jpeg"],
     inStock: true,
   },
   {
@@ -79,7 +97,7 @@ export const products: Product[] = [
         "لا تُطِل الغلي — الدرجات الفاخرة تمرّ بسرعة. سكّر خفيف يكفي لإبراز العطر.",
     },
     variants: [{ weightGrams: 200, priceMAD: 23 }],
-    images: ["/products/smara.jpg"],
+    images: ["/products/smara-single.jpeg"],
     inStock: true,
   },
   {
@@ -98,7 +116,7 @@ export const products: Product[] = [
         "مناسب للبراد الكبير. يمكن إعادة الغلي مرة ثانية دون أن يفقد الطعم.",
     },
     variants: [{ weightGrams: 200, priceMAD: 20 }],
-    images: ["/products/bit-lfakhama.jpg"],
+    images: ["/products/bit-fakhar-single.jpeg"],
     inStock: true,
   },
 ];
