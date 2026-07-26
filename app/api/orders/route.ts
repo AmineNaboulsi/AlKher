@@ -1,0 +1,162 @@
+import { randomBytes } from "node:crypto";
+import { getProductBySlug } from "@/lib/products";
+import {
+  deliveryFeeFor,
+  findCity,
+  normalisePhone,
+  PAYMENT_METHOD,
+} from "@/lib/checkout-config";
+import { DatabaseNotConfiguredError, getDb } from "@/lib/mongodb";
+import {
+  ORDERS_COLLECTION,
+  type CreateOrderError,
+  type OrderDocument,
+  type OrderLine,
+} from "@/lib/orders";
+
+export const runtime = "nodejs";
+
+const MAX_ITEM_QUANTITY = 99;
+const MAX_DISTINCT_ITEMS = 50;
+
+/** Unambiguous alphabet — no 0/O/1/I — for numbers read aloud over the phone. */
+const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+function createOrderNumber(): string {
+  const bytes = randomBytes(6);
+  let code = "";
+  for (const byte of bytes) code += CODE_ALPHABET[byte % CODE_ALPHABET.length];
+  return `KH-${code}`;
+}
+
+function badRequest(body: CreateOrderError, status = 400) {
+  return Response.json(body, { status });
+}
+
+type RawItem = { slug?: unknown; weightGrams?: unknown; quantity?: unknown };
+
+export async function POST(request: Request) {
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return badRequest({ error: "صيغة الطلب غير صحيحة." });
+  }
+
+  if (typeof payload !== "object" || payload === null) {
+    return badRequest({ error: "صيغة الطلب غير صحيحة." });
+  }
+
+  const body = payload as Record<string, unknown>;
+  const fields: CreateOrderError["fields"] = {};
+
+  // --- Customer ---
+  const fullName =
+    typeof body.fullName === "string" ? body.fullName.trim() : "";
+  if (fullName.length < 3 || fullName.length > 80) {
+    fields.fullName = "المرجو كتابة الاسم الكامل (3 أحرف على الأقل).";
+  }
+
+  const rawPhone = typeof body.phone === "string" ? body.phone : "";
+  const phone = normalisePhone(rawPhone);
+  if (!phone) {
+    fields.phone = "رقم هاتف مغربي غير صحيح — مثال: 0612345678";
+  }
+
+  const cityName = typeof body.city === "string" ? body.city.trim() : "";
+  const city = findCity(cityName);
+  if (!city) {
+    fields.city = "المرجو اختيار مدينة من القائمة.";
+  }
+
+  // --- Items: prices are recomputed here, never taken from the client ---
+  const rawItems = Array.isArray(body.items) ? (body.items as RawItem[]) : null;
+  const items: OrderLine[] = [];
+
+  if (!rawItems || rawItems.length === 0) {
+    fields.items = "السلة فارغة.";
+  } else if (rawItems.length > MAX_DISTINCT_ITEMS) {
+    fields.items = "عدد المنتجات في السلة كبير جداً.";
+  } else {
+    for (const raw of rawItems) {
+      const product =
+        typeof raw.slug === "string" ? getProductBySlug(raw.slug) : undefined;
+      const variant = product?.variants.find(
+        (v) => v.weightGrams === raw.weightGrams
+      );
+      const quantity =
+        typeof raw.quantity === "number" && Number.isInteger(raw.quantity)
+          ? raw.quantity
+          : 0;
+
+      if (!product || !variant) {
+        fields.items = "أحد المنتجات غير متوفر — المرجو تحديث السلة.";
+        break;
+      }
+      if (!product.inStock) {
+        fields.items = `${product.name} غير متوفر حالياً.`;
+        break;
+      }
+      if (quantity < 1 || quantity > MAX_ITEM_QUANTITY) {
+        fields.items = "الكمية المطلوبة غير صحيحة.";
+        break;
+      }
+
+      items.push({
+        slug: product.slug,
+        name: product.name,
+        weightGrams: variant.weightGrams,
+        quantity,
+        unitPriceMAD: variant.priceMAD,
+        lineTotalMAD: variant.priceMAD * quantity,
+      });
+    }
+  }
+
+  if (Object.keys(fields).length > 0) {
+    return badRequest({ error: "المرجو تصحيح المعلومات التالية.", fields });
+  }
+
+  const subtotalMAD = items.reduce((sum, i) => sum + i.lineTotalMAD, 0);
+  const deliveryFeeMAD = deliveryFeeFor(city!, subtotalMAD);
+
+  const order: OrderDocument = {
+    orderNumber: createOrderNumber(),
+    status: "pending",
+    paymentMethod: PAYMENT_METHOD.id,
+    customer: { fullName, phone: phone!, city: city!.name },
+    items,
+    subtotalMAD,
+    deliveryFeeMAD,
+    totalMAD: subtotalMAD + deliveryFeeMAD,
+    createdAt: new Date(),
+  };
+
+  try {
+    const db = await getDb();
+    await db.collection<OrderDocument>(ORDERS_COLLECTION).insertOne(order);
+  } catch (error) {
+    if (error instanceof DatabaseNotConfiguredError) {
+      console.error("[orders] MONGODB_URI is not set — order not saved");
+      return badRequest(
+        { error: "خدمة الطلبات غير مهيّأة حالياً. المرجو المحاولة لاحقاً." },
+        503
+      );
+    }
+    console.error("[orders] failed to save order", error);
+    return badRequest(
+      { error: "تعذّر تسجيل الطلب. المرجو المحاولة مرة أخرى." },
+      500
+    );
+  }
+
+  return Response.json(
+    {
+      orderNumber: order.orderNumber,
+      subtotalMAD: order.subtotalMAD,
+      deliveryFeeMAD: order.deliveryFeeMAD,
+      totalMAD: order.totalMAD,
+    },
+    { status: 201 }
+  );
+}

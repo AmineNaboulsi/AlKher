@@ -14,11 +14,51 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
+
+> This project runs on port **3001**, not the Next.js default 3000 — WSL forwards port 3000 to a separate app on this machine, and the collision made `localhost:3000` land on that app's login page instead of this store.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Checkout (cash on delivery)
+
+Orders are stored in MongoDB. Copy `.env.example` to `.env.local` and set a
+connection string:
+
+```bash
+cp .env.example .env.local
+# then edit MONGODB_URI
+```
+
+Without `MONGODB_URI` the site still browses fine, but `POST /api/orders`
+answers `503` and the checkout form shows "خدمة الطلبات غير مهيّأة حالياً".
+
+| Endpoint                | Method | Purpose                                                          |
+| ----------------------- | ------ | ---------------------------------------------------------------- |
+| `/api/checkout/config`  | GET    | Predefined delivery cities + fees, default city, payment method   |
+| `/api/orders`           | POST   | Validates name/city/phone, reprices from the catalogue, saves     |
+
+Orders land in the `orders` collection:
+
+```js
+{
+  orderNumber: "KH-7F3K2Q",
+  status: "pending",              // pending | confirmed | shipped | cancelled
+  paymentMethod: "cod",
+  customer: { fullName, phone, city },
+  items: [{ slug, name, weightGrams, quantity, unitPriceMAD, lineTotalMAD }],
+  subtotalMAD, deliveryFeeMAD, totalMAD,
+  createdAt: ISODate(...)
+}
+```
+
+The client never sends prices — the API recomputes every amount from
+`lib/products.ts` and `lib/checkout-config.ts`, so a tampered request cannot
+change what an order costs.
+
+**Before taking live orders:** the per-city delivery fees and the
+300 د.م. free-delivery threshold in `lib/checkout-config.ts` are placeholders.
+Replace them with your real rates.
 
 ## Learn More
 
