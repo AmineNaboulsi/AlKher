@@ -15,6 +15,7 @@ import {
   type OrderDocument,
   type OrderLine,
 } from "@/lib/orders";
+import { sendOrderWhatsAppMessage } from "@/lib/whatsapp";
 
 export const runtime = "nodejs";
 
@@ -169,6 +170,24 @@ export async function POST(request: Request) {
     return badRequest(
       { error: "تعذّر تسجيل الطلب. المرجو المحاولة مرة أخرى." },
       500
+    );
+  }
+
+  // Best-effort — a WhatsApp/Meta outage must never fail order creation.
+  // Meta's response is stored per recipient so delivery can be verified later.
+  const whatsappResults = await sendOrderWhatsAppMessage(order);
+  try {
+    const db = await getDb();
+    await db
+      .collection<OrderDocument>(ORDERS_COLLECTION)
+      .updateOne(
+        { orderNumber: order.orderNumber },
+        { $set: { whatsapp: whatsappResults } }
+      );
+  } catch (error) {
+    console.error(
+      `[orders] failed to store whatsapp delivery status for ${order.orderNumber}`,
+      error
     );
   }
 
