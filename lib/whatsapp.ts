@@ -11,8 +11,15 @@
  * variable (the order number) and a dynamic URL button (sub_type "url")
  * whose base is `${SITE_URL}/order/` and whose `{{1}}` suffix is the order
  * number.
+ *
+ * Every send attempt — success or failure, full request payload and Meta's
+ * raw response — is logged via {@link logWhatsAppAttempt} for auditing,
+ * independently of the lightweight per-order summary returned here.
  */
 import type { OrderDocument, WhatsAppDeliveryResult } from "@/lib/orders";
+import { logWhatsAppAttempt } from "@/lib/whatsapp-log";
+
+const METHOD = "sendTemplateMessage";
 
 const GRAPH_API_VERSION = "v21.0";
 
@@ -71,6 +78,7 @@ async function sendTemplateMessage(
   };
 
   const sentAt = new Date();
+  const startedAt = Date.now();
 
   try {
     const res = await fetch(
@@ -93,11 +101,24 @@ async function sendTemplateMessage(
       // Meta didn't return JSON — keep the raw text as the stored response.
     }
 
+    const durationMs = Date.now() - startedAt;
+
     if (!res.ok) {
       console.error(
         `[whatsapp] send failed (${res.status}) to ${to} for order ${orderNumber}: ${rawBody}`
       );
-      return { to, success: false, statusCode: res.status, response, sentAt };
+      await logWhatsAppAttempt({
+        orderNumber,
+        to,
+        method: METHOD,
+        requestPayload: requestBody,
+        response,
+        statusCode: res.status,
+        success: false,
+        durationMs,
+        sentAt,
+      });
+      return { to, success: false, statusCode: res.status, response, durationMs, sentAt };
     }
 
     const messageId =
@@ -106,11 +127,33 @@ async function sendTemplateMessage(
         : undefined;
 
     console.log(`[whatsapp] sent order ${orderNumber} notification to ${to} -> ${orderUrl(orderNumber)}`);
-    return { to, success: true, statusCode: res.status, messageId, response, sentAt };
+    await logWhatsAppAttempt({
+      orderNumber,
+      to,
+      method: METHOD,
+      requestPayload: requestBody,
+      response,
+      statusCode: res.status,
+      success: true,
+      durationMs,
+      sentAt,
+    });
+    return { to, success: true, statusCode: res.status, messageId, response, durationMs, sentAt };
   } catch (error) {
+    const durationMs = Date.now() - startedAt;
     const message = error instanceof Error ? error.message : String(error);
     console.error(`[whatsapp] send threw to ${to} for order ${orderNumber}`, error);
-    return { to, success: false, error: message, sentAt };
+    await logWhatsAppAttempt({
+      orderNumber,
+      to,
+      method: METHOD,
+      requestPayload: requestBody,
+      success: false,
+      error: message,
+      durationMs,
+      sentAt,
+    });
+    return { to, success: false, error: message, durationMs, sentAt };
   }
 }
 

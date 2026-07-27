@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { after } from "next/server";
 import { getProductBySlug, isVariantInStock } from "@/lib/products";
 import {
   deliveryFee,
@@ -173,23 +174,27 @@ export async function POST(request: Request) {
     );
   }
 
-  // Best-effort — a WhatsApp/Meta outage must never fail order creation.
-  // Meta's response is stored per recipient so delivery can be verified later.
-  const whatsappResults = await sendOrderWhatsAppMessage(order);
-  try {
-    const db = await getDb();
-    await db
-      .collection<OrderDocument>(ORDERS_COLLECTION)
-      .updateOne(
-        { orderNumber: order.orderNumber },
-        { $set: { whatsapp: whatsappResults } }
+  // WhatsApp notifications run after the response is sent — the order is
+  // already saved, so a slow or erroring Meta call must never delay checkout
+  // or affect the order-creation response. Every attempt is logged
+  // regardless (see lib/whatsapp-log.ts).
+  after(async () => {
+    const whatsappResults = await sendOrderWhatsAppMessage(order);
+    try {
+      const db = await getDb();
+      await db
+        .collection<OrderDocument>(ORDERS_COLLECTION)
+        .updateOne(
+          { orderNumber: order.orderNumber },
+          { $set: { whatsapp: whatsappResults } }
+        );
+    } catch (error) {
+      console.error(
+        `[orders] failed to store whatsapp delivery status for ${order.orderNumber}`,
+        error
       );
-  } catch (error) {
-    console.error(
-      `[orders] failed to store whatsapp delivery status for ${order.orderNumber}`,
-      error
-    );
-  }
+    }
+  });
 
   return Response.json(
     {
