@@ -38,6 +38,7 @@ export type WhatsAppDeliveryResult = {
   /** Raw Meta API response body (parsed JSON, or text if Meta didn't return JSON). */
   response?: unknown;
   error?: string;
+  durationMs: number;
   sentAt: Date;
 };
 
