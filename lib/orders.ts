@@ -29,6 +29,18 @@ export type OrderPromo = {
   totalMAD: number;
 };
 
+/** Result of one WhatsApp send attempt, kept for delivery verification. */
+export type WhatsAppDeliveryResult = {
+  to: string;
+  success: boolean;
+  statusCode?: number;
+  messageId?: string;
+  /** Raw Meta API response body (parsed JSON, or text if Meta didn't return JSON). */
+  response?: unknown;
+  error?: string;
+  sentAt: Date;
+};
+
 export type OrderDocument = {
   orderNumber: string;
   status: OrderStatus;
@@ -43,6 +55,8 @@ export type OrderDocument = {
   deliveryFeeMAD: number;
   totalMAD: number;
   createdAt: Date;
+  /** Per-recipient WhatsApp notification outcomes — set after order creation. */
+  whatsapp?: WhatsAppDeliveryResult[];
 };
 
 /** What the checkout form posts to `/api/orders`. */
