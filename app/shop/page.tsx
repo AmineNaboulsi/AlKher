@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { ShopClient } from "@/components/shop-client";
 import { SHOW_CATALOG } from "@/lib/site-config";
+import { getActiveProducts } from "@/lib/products-repo";
 import type { Metadata } from "next";
+
+export const runtime = "nodejs";
 
 export const metadata: Metadata = {
   title: "المتجر — الخير",
@@ -18,5 +21,7 @@ export default async function ShopPage({
   const initialCategory =
     typeof category === "string" ? category : undefined;
 
-  return <ShopClient initialCategory={initialCategory} />;
+  const products = await getActiveProducts();
+
+  return <ShopClient products={products} initialCategory={initialCategory} />;
 }

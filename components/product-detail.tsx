@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Minus, Plus, ChevronRight, Star } from "lucide-react";
 import type { Product, WeightGrams } from "@/lib/products";
-import { getRelatedProducts, isVariantInStock } from "@/lib/products";
+import { isVariantInStock } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
@@ -18,9 +18,10 @@ import { SHOW_CATEGORIES } from "@/lib/site-config";
 
 type ProductDetailProps = {
   product: Product;
+  related: Product[];
 };
 
-export function ProductDetail({ product }: ProductDetailProps) {
+export function ProductDetail({ product, related }: ProductDetailProps) {
   const { addItem } = useCart();
   // Start on a size that can actually be bought.
   const [selectedWeight, setSelectedWeight] = useState<WeightGrams>(
@@ -34,7 +35,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const price = selectedVariant?.priceMAD ?? 0;
   const canOrder =
     product.inStock && selectedVariant != null && isVariantInStock(selectedVariant);
-  const related = getRelatedProducts(product);
 
   return (
     <>

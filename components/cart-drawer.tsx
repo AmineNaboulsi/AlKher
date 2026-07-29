@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart, getItemPrice } from "@/lib/cart-context";
-import { products } from "@/lib/products";
+import { useProductCatalog } from "@/components/product-catalog-provider";
 import {
   Sheet,
   SheetContent,
@@ -25,6 +25,7 @@ export function CartDrawer() {
     pricing,
     itemCount,
   } = useCart();
+  const { getBySlug } = useProductCatalog();
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -44,9 +45,7 @@ export function CartDrawer() {
           <>
             <ul className="flex-1 overflow-y-auto space-y-4 -mx-2 px-2">
               {items.map((item) => {
-                const product = products.find(
-                  (p) => p.slug === item.productSlug
-                );
+                const product = getBySlug(item.productSlug);
                 if (!product) return null;
                 const price = getItemPrice(product, item.weightGrams);
 

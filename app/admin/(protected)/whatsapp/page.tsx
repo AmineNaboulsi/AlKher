@@ -6,10 +6,11 @@ import {
   extractFailureReason,
 } from "@/lib/admin-whatsapp-repo";
 import { DatabaseNotConfiguredError } from "@/lib/mongodb";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
+import { cn } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -147,44 +148,51 @@ export default async function AdminWhatsAppPage({
       )}
 
       {!loadError && logs.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="divide-y divide-border rounded-lg border brass-hairline bg-surface overflow-hidden">
           {logs.map((log, index) => {
             const reason = extractFailureReason(log);
             return (
-              <Card key={`${log.orderNumber}-${log.to}-${index}`}>
-                <CardHeader className="flex flex-row items-start justify-between gap-2">
-                  <div>
-                    <CardTitle className="text-lg" dir="ltr">
+              <div
+                key={`${log.orderNumber}-${log.to}-${index}`}
+                className="flex items-start gap-4 px-5 py-4"
+              >
+                <span
+                  className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                    log.success ? "bg-mint/10 text-mint" : "bg-clay/10 text-clay"
+                  )}
+                >
+                  <WhatsAppIcon className="h-5 w-5" />
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                    <div className="flex min-w-0 items-center gap-2 text-sm">
                       <Link
                         href={`/order/${log.orderNumber}`}
-                        className="hover:underline"
+                        className="font-medium hover:underline"
+                        dir="ltr"
                       >
                         {log.orderNumber}
                       </Link>
-                    </CardTitle>
-                    <p className="text-sm text-ink-muted mt-1" dir="ltr">
-                      إلى {log.to}
-                    </p>
+                      <span className="text-ink-muted truncate" dir="ltr">
+                        → {log.to}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3 text-xs text-ink-muted">
+                      {log.statusCode !== undefined && (
+                        <span dir="ltr">HTTP {log.statusCode}</span>
+                      )}
+                      <span dir="ltr">{log.durationMs}ms</span>
+                      <span>{new Date(log.sentAt).toLocaleString("ar-MA")}</span>
+                      <Badge variant={log.success ? "mint" : "clay"}>
+                        {log.success ? "نجح" : "فشل"}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge variant={log.success ? "mint" : "clay"}>
-                    {log.success ? "نجح" : "فشل"}
-                  </Badge>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {reason && (
-                    <p className="rounded-md bg-clay/10 px-3 py-2 text-sm text-clay">
-                      {reason}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
-                    {log.statusCode !== undefined && (
-                      <span dir="ltr">HTTP {log.statusCode}</span>
-                    )}
-                    <span dir="ltr">{log.durationMs}ms</span>
-                    <span>{new Date(log.sentAt).toLocaleString("ar-MA")}</span>
-                  </div>
-                </CardContent>
-              </Card>
+                  {reason && <p className="mt-1 text-sm text-clay">{reason}</p>}
+                </div>
+              </div>
             );
           })}
         </div>

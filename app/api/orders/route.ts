@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { after } from "next/server";
-import { getProductBySlug, isVariantInStock } from "@/lib/products";
+import { isVariantInStock } from "@/lib/products";
+import { getActiveProducts } from "@/lib/products-repo";
 import {
   deliveryFee,
   isKnownCity,
@@ -59,6 +60,28 @@ export async function POST(request: Request) {
 
   const body = payload as Record<string, unknown>;
   const fields: CreateOrderError["fields"] = {};
+
+  // Catalogue is fetched once, fresh, from the DB — the client never sends
+  // prices, so every item and price below is checked against this snapshot.
+  let catalogBySlug: Map<string, Awaited<ReturnType<typeof getActiveProducts>>[number]>;
+  try {
+    const catalogProducts = await getActiveProducts();
+    catalogBySlug = new Map(catalogProducts.map((p) => [p.slug, p]));
+  } catch (error) {
+    if (error instanceof DatabaseNotConfiguredError) {
+      console.error("[orders] MONGODB_URI is not set — order not saved");
+      return badRequest(
+        { error: "خدمة الطلبات غير مهيّأة حالياً. المرجو المحاولة لاحقاً." },
+        503
+      );
+    }
+    console.error("[orders] failed to load catalogue", error);
+    return badRequest(
+      { error: "تعذّر تسجيل الطلب. المرجو المحاولة مرة أخرى." },
+      500
+    );
+  }
+  const getProductBySlug = (slug: string) => catalogBySlug.get(slug);
 
   // --- Customer ---
   const fullName =
@@ -132,6 +155,7 @@ export async function POST(request: Request) {
 
   // Bundle offers are matched here, server-side, from the validated lines.
   const pricing = priceCart(
+    getProductBySlug,
     items.map((i) => ({
       slug: i.slug,
       weightGrams: i.weightGrams,

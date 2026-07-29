@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Minus, Plus, Trash2, ChevronRight } from "lucide-react";
 import { useCart, getItemPrice } from "@/lib/cart-context";
-import { products } from "@/lib/products";
+import { useProductCatalog } from "@/components/product-catalog-provider";
 import { ProductImage } from "@/components/product-image";
 import { Price } from "@/components/price";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 export function CartView() {
   const { items, updateQuantity, removeItem, subtotal, pricing, clearCart } =
     useCart();
+  const { getBySlug } = useProductCatalog();
 
   return (
     <div className="pt-24 pb-12 sm:pt-28 min-h-[60vh]">
@@ -36,9 +37,7 @@ export function CartView() {
           <div className="space-y-8">
             <ul className="space-y-4">
               {items.map((item) => {
-                const product = products.find(
-                  (p) => p.slug === item.productSlug
-                );
+                const product = getBySlug(item.productSlug);
                 if (!product) return null;
                 const price = getItemPrice(product, item.weightGrams);
 

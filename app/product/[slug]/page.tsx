@@ -1,13 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getProductBySlug, products } from "@/lib/products";
+import { getActiveProductBySlug, getRelatedProducts } from "@/lib/products-repo";
 import { ProductDetail } from "@/components/product-detail";
 import { SHOW_CATALOG } from "@/lib/site-config";
 
-export function generateStaticParams() {
-  if (!SHOW_CATALOG) return [];
-  return products.map((p) => ({ slug: p.slug }));
-}
+export const runtime = "nodejs";
 
 export async function generateMetadata({
   params,
@@ -15,7 +12,7 @@ export async function generateMetadata({
   if (!SHOW_CATALOG) return { title: "منتج غير موجود" };
 
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getActiveProductBySlug(slug);
   if (!product) return { title: "منتج غير موجود" };
   return {
     title: `${product.name} — الخير`,
@@ -29,7 +26,8 @@ export default async function ProductPage({
   if (!SHOW_CATALOG) notFound();
 
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getActiveProductBySlug(slug);
   if (!product) notFound();
-  return <ProductDetail product={product} />;
+  const related = await getRelatedProducts(product);
+  return <ProductDetail product={product} related={related} />;
 }

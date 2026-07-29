@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Banknote, Loader2, Truck } from "lucide-react";
 import { useCart, getItemPrice } from "@/lib/cart-context";
-import { products } from "@/lib/products";
+import { useProductCatalog } from "@/components/product-catalog-provider";
 import type {
   CreateOrderError,
   CreateOrderSuccess,
@@ -31,6 +31,7 @@ type Placed = CreateOrderSuccess & {
 
 export function CheckoutForm() {
   const { items, subtotal, pricing, clearCart } = useCart();
+  const { getBySlug } = useProductCatalog();
 
   const [config, setConfig] = useState<CheckoutConfig | null>(null);
   const [configFailed, setConfigFailed] = useState(false);
@@ -75,7 +76,7 @@ export function CheckoutForm() {
   const lines = useMemo(
     () =>
       items.flatMap((item) => {
-        const product = products.find((p) => p.slug === item.productSlug);
+        const product = getBySlug(item.productSlug);
         if (!product) return [];
         const unitPrice = getItemPrice(product, item.weightGrams);
         return [
@@ -88,7 +89,7 @@ export function CheckoutForm() {
           },
         ];
       }),
-    [items]
+    [items, getBySlug]
   );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
