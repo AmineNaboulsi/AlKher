@@ -5,16 +5,9 @@ import type { Metadata } from "next";
 import { Footer } from "@/components/footer";
 import { Price } from "@/components/price";
 import { getOrderByNumber } from "@/lib/orders-repo";
-import type { OrderStatus } from "@/lib/orders";
+import { ORDER_STATUS_LABELS } from "@/lib/orders";
 
 export const runtime = "nodejs";
-
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "قيد المعالجة",
-  confirmed: "تم التأكيد",
-  shipped: "في الطريق إليك",
-  cancelled: "ملغى",
-};
 
 export const metadata: Metadata = {
   title: "تفاصيل الطلب — الخير",
@@ -56,7 +49,7 @@ export default async function OrderPage({
               </p>
               <p className="text-ink-muted">
                 الحالة:{" "}
-                <span className="text-ink">{STATUS_LABELS[order.status]}</span>
+                <span className="text-ink">{ORDER_STATUS_LABELS[order.status]}</span>
               </p>
             </div>
 

@@ -5,7 +5,7 @@ function Badge({
   variant = "default",
   ...props
 }: React.HTMLAttributes<HTMLSpanElement> & {
-  variant?: "default" | "mint" | "outline" | "muted";
+  variant?: "default" | "mint" | "outline" | "muted" | "clay";
 }) {
   return (
     <span
@@ -15,6 +15,7 @@ function Badge({
         variant === "mint" && "bg-mint/10 text-mint",
         variant === "outline" && "border brass-hairline text-brass",
         variant === "muted" && "bg-surface-raised text-ink-muted",
+        variant === "clay" && "bg-clay/10 text-clay",
         className
       )}
       {...props}

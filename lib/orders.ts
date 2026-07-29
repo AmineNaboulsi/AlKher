@@ -20,6 +20,13 @@ export type OrderCustomer = {
 
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "cancelled";
 
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: "قيد المعالجة",
+  confirmed: "تم التأكيد",
+  shipped: "في الطريق إليك",
+  cancelled: "ملغى",
+};
+
 /** A bundle offer that matched the basket, as priced by the server. */
 export type OrderPromo = {
   promoId: string;
