@@ -1,7 +1,7 @@
 "use client";
 
 import { Tag } from "lucide-react";
-import { PROMOS, promoFullPrice, promoSaving } from "@/lib/promos";
+import { promoFullPrice, promoSaving } from "@/lib/promos";
 import { useCart } from "@/lib/cart-context";
 import { useProductCatalog } from "@/components/product-catalog-provider";
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,9 @@ export function PromoSection({
   heading = "عروض خاصة",
 }: PromoSectionProps) {
   const { addPromo } = useCart();
-  const { getBySlug } = useProductCatalog();
+  const { getBySlug, promos } = useProductCatalog();
 
-  if (PROMOS.length === 0) return null;
+  if (promos.length === 0) return null;
 
   return (
     <section className={cn("py-12 sm:py-16", className)}>
@@ -36,7 +36,7 @@ export function PromoSection({
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          {PROMOS.map((promo) => {
+          {promos.map((promo) => {
             const fullPrice = promoFullPrice(getBySlug, promo);
             const saving = promoSaving(getBySlug, promo);
             const productsInPromo = promo.items.flatMap((item) => {
