@@ -54,7 +54,7 @@ function getItemPrice(product: Product, weightGrams: number): number {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const { getBySlug } = useProductCatalog();
+  const { getBySlug, promos } = useProductCatalog();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -171,13 +171,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () =>
       priceCart(
         getBySlug,
+        promos,
         items.map((i) => ({
           slug: i.productSlug,
           weightGrams: i.weightGrams,
           quantity: i.quantity,
         }))
       ),
-    [items, getBySlug]
+    [items, getBySlug, promos]
   );
 
   const subtotal = pricing.subtotalMAD;

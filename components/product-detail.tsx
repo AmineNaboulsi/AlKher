@@ -7,7 +7,7 @@ import type { Product, WeightGrams } from "@/lib/products";
 import { isVariantInStock } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { ProductCard } from "@/components/product-card";
-import { ProductImage } from "@/components/product-image";
+import { ProductGallery } from "@/components/product-gallery";
 import { Price } from "@/components/price";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,14 +54,11 @@ export function ProductDetail({ product, related }: ProductDetailProps) {
 
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
             {/* Gallery — on the right in RTL flow (first column) */}
-            <div className="space-y-4">
-              <ProductImage
-                product={product}
-                className="aspect-[4/5] w-full rounded-lg border brass-hairline"
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                eager
-              />
-            </div>
+            <ProductGallery
+              images={product.images}
+              name={product.name}
+              category={product.category}
+            />
 
             {/* Details */}
             <div className="space-y-6 text-start">

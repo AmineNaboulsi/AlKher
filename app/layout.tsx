@@ -6,6 +6,7 @@ import { Header } from "@/components/header";
 import { CartDrawer } from "@/components/cart-drawer";
 import { SHOW_CATALOG } from "@/lib/site-config";
 import { getActiveProducts, type ProductDocument } from "@/lib/products-repo";
+import { getActivePromos, type PromoDocument } from "@/lib/promos-repo";
 import "./globals.css";
 
 const display = Reem_Kufi({
@@ -33,9 +34,13 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let products: ProductDocument[] = [];
+  let promos: PromoDocument[] = [];
   if (SHOW_CATALOG) {
     try {
-      products = await getActiveProducts();
+      [products, promos] = await Promise.all([
+        getActiveProducts(),
+        getActivePromos(),
+      ]);
     } catch (error) {
       // The site should still render (pre-launch pages, admin login, etc.)
       // even if the catalogue can't be loaded — cart/shop just show empty.
@@ -50,7 +55,7 @@ export default async function RootLayout({
       className={`${display.variable} ${body.variable} antialiased`}
     >
       <body className="min-h-dvh bg-background text-ink font-body">
-        <ProductCatalogProvider products={products}>
+        <ProductCatalogProvider products={products} promos={promos}>
           <CartProvider>
             <Header />
             {SHOW_CATALOG && <CartDrawer />}

@@ -8,11 +8,11 @@ import type { WeightGrams } from "./products";
  *
  * Pure data + pure functions — safe to import from both the client and the
  * orders API, which is what keeps the displayed total and the charged total in
- * agreement. The catalogue itself now lives in MongoDB rather than a static
- * import, so every pricing function here takes an explicit catalog lookup
- * instead of reaching for a module-level products array — callers supply one
- * backed by whatever they already fetched (the client's ProductCatalogProvider,
- * or a fresh DB read in the orders API).
+ * agreement. Both the catalogue and the promo list now live in MongoDB rather
+ * than static imports, so every pricing function here takes explicit lookups
+ * instead of reaching for module-level arrays — callers supply them backed by
+ * whatever they already fetched (the client's ProductCatalogProvider, or a
+ * fresh DB read in the orders API).
  */
 
 export type Promo = {
@@ -22,32 +22,6 @@ export type Promo = {
   items: { slug: string; weightGrams: WeightGrams; quantity: number }[];
   bundlePriceMAD: number;
 };
-
-export const PROMOS: Promo[] = [
-  {
-    id: "duo-las-palmas",
-    name: "علبتان لاس بالماس",
-    description: "عبوتان من لاس بالماس 41022 توب — 500 غرام لكل واحدة.",
-    items: [{ slug: "las-palmas", weightGrams: 500, quantity: 2 }],
-    bundlePriceMAD: 90,
-  },
-  {
-    id: "trio-200g",
-    name: "الثلاثية — سمارة وبيت الفخامة والساقية الحمراء",
-    description:
-      "علبة من كل نوع، 200 غرام لكل واحدة: سمارة، بيت الفخامة، والساقية الحمراء.",
-    items: [
-      { slug: "smara", weightGrams: 200, quantity: 1 },
-      { slug: "bit-lfakhama", weightGrams: 200, quantity: 1 },
-      { slug: "sa9iya-l7amra", weightGrams: 200, quantity: 1 },
-    ],
-    bundlePriceMAD: 50,
-  },
-];
-
-export function getPromoById(id: string): Promo | undefined {
-  return PROMOS.find((p) => p.id === id);
-}
 
 /** Minimal shape pricing needs from a product — satisfied by ProductDocument. */
 export type PriceableProduct = {
@@ -112,6 +86,7 @@ const key = (slug: string, weightGrams: number) => `${slug}|${weightGrams}`;
  */
 export function priceCart(
   catalog: CatalogLookup,
+  promos: Promo[],
   lines: CartLineInput[]
 ): PricedCart {
   const remaining = new Map<string, number>();
@@ -126,7 +101,7 @@ export function priceCart(
   );
 
   const appliedPromos: AppliedPromo[] = [];
-  const ordered = [...PROMOS].sort(
+  const ordered = [...promos].sort(
     (a, b) => promoSaving(catalog, b) - promoSaving(catalog, a)
   );
 
