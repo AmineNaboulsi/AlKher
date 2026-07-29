@@ -2,8 +2,8 @@
 
 import { Tag } from "lucide-react";
 import { PROMOS, promoFullPrice, promoSaving } from "@/lib/promos";
-import { getProductBySlug } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
+import { useProductCatalog } from "@/components/product-catalog-provider";
 import { Button } from "@/components/ui/button";
 import { Price } from "@/components/price";
 import { ProductImage } from "@/components/product-image";
@@ -19,6 +19,7 @@ export function PromoSection({
   heading = "عروض خاصة",
 }: PromoSectionProps) {
   const { addPromo } = useCart();
+  const { getBySlug } = useProductCatalog();
 
   if (PROMOS.length === 0) return null;
 
@@ -36,10 +37,10 @@ export function PromoSection({
 
         <div className="grid gap-6 sm:grid-cols-2">
           {PROMOS.map((promo) => {
-            const fullPrice = promoFullPrice(promo);
-            const saving = promoSaving(promo);
+            const fullPrice = promoFullPrice(getBySlug, promo);
+            const saving = promoSaving(getBySlug, promo);
             const productsInPromo = promo.items.flatMap((item) => {
-              const product = getProductBySlug(item.slug);
+              const product = getBySlug(item.slug);
               return product ? [{ product, quantity: item.quantity }] : [];
             });
 

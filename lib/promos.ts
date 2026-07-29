@@ -1,4 +1,4 @@
-import { getProductBySlug, type WeightGrams } from "./products";
+import type { WeightGrams } from "./products";
 
 /**
  * Bundle offers. A promo is a set of required items sold together for a fixed
@@ -8,7 +8,11 @@ import { getProductBySlug, type WeightGrams } from "./products";
  *
  * Pure data + pure functions — safe to import from both the client and the
  * orders API, which is what keeps the displayed total and the charged total in
- * agreement.
+ * agreement. The catalogue itself now lives in MongoDB rather than a static
+ * import, so every pricing function here takes an explicit catalog lookup
+ * instead of reaching for a module-level products array — callers supply one
+ * backed by whatever they already fetched (the client's ProductCatalogProvider,
+ * or a fresh DB read in the orders API).
  */
 
 export type Promo = {
@@ -45,23 +49,34 @@ export function getPromoById(id: string): Promo | undefined {
   return PROMOS.find((p) => p.id === id);
 }
 
-export function unitPrice(slug: string, weightGrams: number): number {
-  const product = getProductBySlug(slug);
+/** Minimal shape pricing needs from a product — satisfied by ProductDocument. */
+export type PriceableProduct = {
+  variants: { weightGrams: number; priceMAD: number }[];
+};
+
+export type CatalogLookup = (slug: string) => PriceableProduct | undefined;
+
+export function unitPrice(
+  catalog: CatalogLookup,
+  slug: string,
+  weightGrams: number
+): number {
+  const product = catalog(slug);
   return (
     product?.variants.find((v) => v.weightGrams === weightGrams)?.priceMAD ?? 0
   );
 }
 
 /** What the promo's contents cost when bought separately. */
-export function promoFullPrice(promo: Promo): number {
+export function promoFullPrice(catalog: CatalogLookup, promo: Promo): number {
   return promo.items.reduce(
-    (sum, i) => sum + unitPrice(i.slug, i.weightGrams) * i.quantity,
+    (sum, i) => sum + unitPrice(catalog, i.slug, i.weightGrams) * i.quantity,
     0
   );
 }
 
-export function promoSaving(promo: Promo): number {
-  return promoFullPrice(promo) - promo.bundlePriceMAD;
+export function promoSaving(catalog: CatalogLookup, promo: Promo): number {
+  return promoFullPrice(catalog, promo) - promo.bundlePriceMAD;
 }
 
 export type CartLineInput = {
@@ -95,7 +110,10 @@ const key = (slug: string, weightGrams: number) => `${slug}|${weightGrams}`;
  * Greedily applies offers, best saving first, then charges whatever is left at
  * unit price.
  */
-export function priceCart(lines: CartLineInput[]): PricedCart {
+export function priceCart(
+  catalog: CatalogLookup,
+  lines: CartLineInput[]
+): PricedCart {
   const remaining = new Map<string, number>();
   for (const line of lines) {
     const k = key(line.slug, line.weightGrams);
@@ -103,12 +121,14 @@ export function priceCart(lines: CartLineInput[]): PricedCart {
   }
 
   const fullPriceMAD = lines.reduce(
-    (sum, l) => sum + unitPrice(l.slug, l.weightGrams) * l.quantity,
+    (sum, l) => sum + unitPrice(catalog, l.slug, l.weightGrams) * l.quantity,
     0
   );
 
   const appliedPromos: AppliedPromo[] = [];
-  const ordered = [...PROMOS].sort((a, b) => promoSaving(b) - promoSaving(a));
+  const ordered = [...PROMOS].sort(
+    (a, b) => promoSaving(catalog, b) - promoSaving(catalog, a)
+  );
 
   for (const promo of ordered) {
     if (promo.items.length === 0) continue;
@@ -138,7 +158,7 @@ export function priceCart(lines: CartLineInput[]): PricedCart {
   for (const [k, qty] of remaining) {
     if (qty <= 0) continue;
     const [slug, weight] = k.split("|");
-    remainderMAD += unitPrice(slug, Number(weight)) * qty;
+    remainderMAD += unitPrice(catalog, slug, Number(weight)) * qty;
   }
 
   const subtotalMAD =

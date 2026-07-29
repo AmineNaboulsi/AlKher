@@ -10,6 +10,7 @@ import {
 } from "react";
 import { type Product, type WeightGrams } from "./products";
 import { priceCart, type PricedCart, type Promo } from "./promos";
+import { useProductCatalog } from "@/components/product-catalog-provider";
 
 export type CartItem = {
   productSlug: string;
@@ -53,6 +54,7 @@ function getItemPrice(product: Product, weightGrams: number): number {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { getBySlug } = useProductCatalog();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -168,13 +170,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const pricing = useMemo(
     () =>
       priceCart(
+        getBySlug,
         items.map((i) => ({
           slug: i.productSlug,
           weightGrams: i.weightGrams,
           quantity: i.quantity,
         }))
       ),
-    [items]
+    [items, getBySlug]
   );
 
   const subtotal = pricing.subtotalMAD;

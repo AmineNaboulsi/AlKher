@@ -1,12 +1,12 @@
-import { getFeaturedProducts } from "@/lib/products";
+import { getFeaturedProducts } from "@/lib/products-repo";
 import { ProductCard } from "@/components/product-card";
 import { ZelligeDivider } from "@/components/zellige-divider";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 
-export function FeaturedProducts() {
-  const featured = getFeaturedProducts(4);
+export async function FeaturedProducts() {
+  const featured = await getFeaturedProducts(4);
 
   return (
     <section className="py-12 sm:py-16">

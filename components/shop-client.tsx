@@ -3,12 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import {
-  products,
-  CATEGORIES,
-  isVariantInStock,
-  type Product,
-} from "@/lib/products";
+import { CATEGORIES, isVariantInStock, type Product } from "@/lib/products";
 import { ProductCard } from "@/components/product-card";
 import { PromoSection } from "@/components/promo-section";
 import { Footer } from "@/components/footer";
@@ -24,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { SHOW_CATEGORIES } from "@/lib/site-config";
 
 type ShopClientProps = {
+  products: Product[];
   initialCategory?: string;
 };
 
@@ -38,7 +34,7 @@ function getLowestPrice(p: Product) {
   return Math.min(...shown.map((v) => v.priceMAD));
 }
 
-export function ShopClient({ initialCategory }: ShopClientProps) {
+export function ShopClient({ products, initialCategory }: ShopClientProps) {
   // With categories hidden there is no way to change this, and a stale
   // ?category= link must not silently filter the listing down.
   const [category, setCategory] = useState<string>(
@@ -71,7 +67,7 @@ export function ShopClient({ initialCategory }: ShopClientProps) {
     }
 
     return result;
-  }, [category, sort, inStockOnly, maxPrice]);
+  }, [products, category, sort, inStockOnly, maxPrice]);
 
   const resetFilters = () => {
     setCategory("all");
