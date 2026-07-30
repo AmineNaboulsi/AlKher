@@ -18,6 +18,7 @@
  */
 import type { OrderDocument, WhatsAppDeliveryResult } from "@/lib/orders";
 import { logWhatsAppAttempt } from "@/lib/whatsapp-log";
+import { getSiteSettings } from "@/lib/site-settings-repo";
 
 const METHOD = "sendTemplateMessage";
 
@@ -36,14 +37,6 @@ function toGraphNumber(raw: string): string {
 function orderUrl(orderNumber: string): string {
   const base = (process.env.SITE_URL ?? "http://localhost:3001").replace(/\/$/, "");
   return `${base}/order/${orderNumber}`;
-}
-
-/** Store-owner numbers that get an alert alongside the customer, e.g. "+212654711474,+212610755809". */
-function ownerNumbers(): string[] {
-  return (process.env.WHATSAPP_OWNER_NUMBERS ?? "")
-    .split(",")
-    .map((n) => n.trim())
-    .filter(Boolean);
 }
 
 async function sendTemplateMessage(
@@ -158,11 +151,12 @@ async function sendTemplateMessage(
 }
 
 /**
- * Notifies the customer and every configured store owner on WhatsApp, each
- * with a link to the order's details page. Best-effort and parallel: one
- * recipient failing (bad number, Meta outage) never blocks the others or the
- * order-creation response. Returns each recipient's outcome (including
- * Meta's raw response) so callers can persist it for delivery verification.
+ * Notifies the customer (unless disabled via settings.sendCustomerWhatsApp)
+ * and every configured store-alert number on WhatsApp, each with a link to
+ * the order's details page. Best-effort and parallel: one recipient failing
+ * (bad number, Meta outage) never blocks the others or the order-creation
+ * response. Returns each recipient's outcome (including Meta's raw response)
+ * so callers can persist it for delivery verification.
  */
 export async function sendOrderWhatsAppMessage(
   order: OrderDocument
@@ -178,9 +172,10 @@ export async function sendOrderWhatsAppMessage(
     return [];
   }
 
+  const settings = await getSiteSettings();
   const recipients = [
-    toGraphNumber(order.customer.phone),
-    ...ownerNumbers().map(toGraphNumber),
+    ...(settings.sendCustomerWhatsApp ? [toGraphNumber(order.customer.phone)] : []),
+    ...settings.orderAlertPhones.map(toGraphNumber),
   ];
 
   return Promise.all(

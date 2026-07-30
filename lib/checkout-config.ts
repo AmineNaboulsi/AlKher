@@ -42,10 +42,6 @@ export const PAYMENT_METHOD = {
   note: "تدفع نقداً لموصّل الطلب عند التسليم — لا حاجة لبطاقة بنكية.",
 } as const;
 
-export function isKnownCity(name: string): boolean {
-  return CITIES.includes(name);
-}
-
 export function deliveryFee(): number {
   return DELIVERY_FEE_MAD;
 }

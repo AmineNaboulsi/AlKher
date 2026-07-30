@@ -3,12 +3,7 @@ import { after } from "next/server";
 import { isVariantInStock } from "@/lib/products";
 import { getActiveProducts } from "@/lib/products-repo";
 import { getActivePromos } from "@/lib/promos-repo";
-import {
-  deliveryFee,
-  isKnownCity,
-  normalisePhone,
-  PAYMENT_METHOD,
-} from "@/lib/checkout-config";
+import { deliveryFee, normalisePhone, PAYMENT_METHOD } from "@/lib/checkout-config";
 import { DatabaseNotConfiguredError, getDb } from "@/lib/mongodb";
 import { priceCart } from "@/lib/promos";
 import { SHOW_CATALOG } from "@/lib/site-config";
@@ -104,8 +99,8 @@ export async function POST(request: Request) {
   }
 
   const cityName = typeof body.city === "string" ? body.city.trim() : "";
-  if (!isKnownCity(cityName)) {
-    fields.city = "المرجو اختيار مدينة من القائمة.";
+  if (cityName.length < 2 || cityName.length > 80) {
+    fields.city = "المرجو كتابة اسم المدينة.";
   }
 
   // --- Items: prices are recomputed here, never taken from the client ---
