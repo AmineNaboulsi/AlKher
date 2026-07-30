@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ShoppingBag, Menu } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useSiteSettings } from "@/components/site-settings-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SHOW_CATALOG } from "@/lib/site-config";
@@ -16,6 +17,7 @@ const navLinks = [
 
 export function Header() {
   const { itemCount, openCart } = useCart();
+  const { storeName } = useSiteSettings();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -39,7 +41,7 @@ export function Header() {
           href="/"
           className="font-display text-2xl font-bold tracking-tight text-ink hover:text-brass transition-colors"
         >
-          الخير
+          {storeName}
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
