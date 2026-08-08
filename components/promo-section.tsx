@@ -4,6 +4,7 @@ import { Tag } from "lucide-react";
 import { promoFullPrice, promoSaving } from "@/lib/promos";
 import { useCart } from "@/lib/cart-context";
 import { useProductCatalog } from "@/components/product-catalog-provider";
+import { SectionHeading } from "@/components/section-heading";
 import { Button } from "@/components/ui/button";
 import { Price } from "@/components/price";
 import { ProductImage } from "@/components/product-image";
@@ -24,18 +25,24 @@ export function PromoSection({
   if (promos.length === 0) return null;
 
   return (
-    <section className={cn("py-12 sm:py-16", className)}>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h2 className="font-display text-2xl sm:text-3xl font-semibold">
-            {heading}
-          </h2>
-          <p className="text-ink-muted mt-2 text-sm sm:text-base">
-            العرض يُحسب تلقائياً في السلة
-          </p>
-        </div>
+    <section
+      className={cn(
+        "relative overflow-hidden border-y brass-hairline bg-surface py-20 sm:py-24",
+        className
+      )}
+    >
+      {/* Clay bloom — the only warm-red light on the page, so an offer reads as
+          an offer without a single "SALE" sticker. */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_85%_0%,rgba(212,82,44,0.1),transparent_62%)]" />
 
-        <div className="grid gap-6 sm:grid-cols-2">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          kicker="وفّر أكثر"
+          title={heading}
+          blurb="العرض كيتحسب أوتوماتيكياً فالسلة — سواء زدتيه من هنا أو جمعتي نفس العلب بيدك."
+        />
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-2">
           {promos.map((promo) => {
             const fullPrice = promoFullPrice(getBySlug, promo);
             const saving = promoSaving(getBySlug, promo);
@@ -47,31 +54,29 @@ export function PromoSection({
             return (
               <article
                 key={promo.id}
-                className="flex flex-col gap-4 rounded-lg border brass-hairline bg-surface p-5 shadow-card"
+                className="group flex flex-col gap-5 rounded-2xl border brass-hairline bg-surface-raised p-6 shadow-card transition-colors duration-300 hover:border-brass/45"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-clay/10 px-2.5 py-0.5 text-xs font-medium text-clay">
-                      <Tag className="h-3 w-3" />
-                      وفّر <Price amount={saving} />
-                    </span>
-                    <h3 className="font-display text-lg font-semibold">
-                      {promo.name}
-                    </h3>
-                  </div>
+                <div className="space-y-2.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-clay/18 px-3 py-1 text-xs font-semibold text-clay ring-1 ring-inset ring-clay/30">
+                    <Tag className="h-3 w-3" />
+                    وفّر <Price amount={saving} />
+                  </span>
+                  <h3 className="font-display text-xl font-semibold">
+                    {promo.name}
+                  </h3>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2.5">
                   {productsInPromo.map(({ product, quantity }) => (
                     <div key={product.slug} className="relative">
                       <ProductImage
                         product={product}
-                        className="h-20 w-16 rounded-md"
-                        sizes="64px"
+                        className="h-24 w-20 rounded-lg border brass-hairline"
+                        sizes="80px"
                       />
                       {quantity > 1 && (
                         <span
-                          className="absolute -top-1 -end-1 flex h-5 w-5 items-center justify-center rounded-full bg-brass text-[10px] font-bold text-background"
+                          className="absolute -top-1.5 -end-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brass text-[10px] font-bold text-night"
                           dir="ltr"
                         >
                           ×{quantity}
@@ -81,26 +86,22 @@ export function PromoSection({
                   ))}
                 </div>
 
-                <p className="text-sm text-ink-muted leading-relaxed flex-1">
+                <p className="flex-1 text-sm leading-relaxed text-ink-muted">
                   {promo.description}
                 </p>
 
-                <div className="flex items-end justify-between gap-3">
-                  <div>
+                <div className="flex flex-wrap items-end justify-between gap-3 border-t brass-hairline pt-4">
+                  <div className="flex items-baseline gap-2.5">
                     <Price
                       amount={promo.bundlePriceMAD}
-                      className="font-display text-2xl font-bold text-brass"
+                      className="font-display text-2xl font-bold text-brass-light"
                     />
                     <Price
                       amount={fullPrice}
-                      className="ms-2 text-sm text-ink-muted line-through"
+                      className="text-sm text-ink-faint line-through"
                     />
                   </div>
-                  <Button
-                    variant="brass"
-                    size="sm"
-                    onClick={() => addPromo(promo)}
-                  >
+                  <Button variant="brass" onClick={() => addPromo(promo)}>
                     أضف العرض
                   </Button>
                 </div>

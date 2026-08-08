@@ -11,7 +11,7 @@ import { Price } from "@/components/price";
 import { ProductImage } from "@/components/product-image";
 import { cn } from "@/lib/utils";
 import { SHOW_CATEGORIES } from "@/lib/site-config";
-import { ShoppingCart } from "lucide-react";
+import { Plus } from "lucide-react";
 
 type ProductCardProps = {
   product: Product;
@@ -46,10 +46,10 @@ export function ProductCard({ product, className, eager }: ProductCardProps) {
         const rect = el.getBoundingClientRect();
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
-        const tiltX = (y - 0.5) * -16;
-        const tiltY = (x - 0.5) * 16;
-        el.style.setProperty("--tilt-x", `${tiltX}deg`);
-        el.style.setProperty("--tilt-y", `${tiltY}deg`);
+        // Gentler than the light theme's tilt — on a dark card the specular
+        // does the work, and a big rotation just smears the packshot.
+        el.style.setProperty("--tilt-x", `${(y - 0.5) * -10}deg`);
+        el.style.setProperty("--tilt-y", `${(x - 0.5) * 10}deg`);
         el.style.setProperty("--spec-x", `${x * 100}%`);
         el.style.setProperty("--spec-y", `${y * 100}%`);
       });
@@ -69,46 +69,52 @@ export function ProductCard({ product, className, eager }: ProductCardProps) {
   return (
     <article
       className={cn("group relative", className)}
-      style={{ perspective: "800px" }}
+      style={{ perspective: "900px" }}
     >
       <div
         ref={cardRef}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
-        className="card-tilt relative overflow-hidden rounded-lg border brass-hairline bg-surface shadow-card group-hover:shadow-glow transition-shadow duration-300"
+        className="card-tilt relative flex h-full flex-col overflow-hidden rounded-2xl border brass-hairline bg-surface shadow-card transition-colors duration-300 group-hover:border-brass/45 group-hover:shadow-glow"
       >
-        <div className="pointer-events-none absolute inset-0 card-specular opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+        <div className="pointer-events-none absolute inset-0 z-10 card-specular opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-        <Link href={`/product/${product.slug}`} className="block">
-          <ProductImage
-            product={product}
-            className="aspect-[4/5] w-full"
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-            eager={eager}
-          />
-          <div className="p-4 space-y-2">
-            <div className="flex items-center justify-between gap-2">
+        <Link href={`/product/${product.slug}`} className="flex flex-1 flex-col">
+          <div className="relative overflow-hidden">
+            <ProductImage
+              product={product}
+              className="aspect-[4/5] w-full transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              eager={eager}
+            />
+            {/* Grounds the packshot into the card instead of ending on a hard
+                edge halfway down. */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface to-transparent" />
+
+            <div className="absolute start-3 top-3 flex flex-col gap-1.5">
               {SHOW_CATEGORIES && (
-                <Badge variant="outline">{product.category}</Badge>
+                <Badge variant="outline" className="glass">
+                  {product.category}
+                </Badge>
               )}
-              {canOrder ? (
-                <Badge variant="mint">متوفر</Badge>
-              ) : (
-                <Badge variant="muted">نفد المخزون</Badge>
-              )}
+              {!canOrder && <Badge variant="muted">نفد المخزون</Badge>}
             </div>
-            <h3 className="font-display text-lg font-semibold group-hover:text-brass transition-colors">
+          </div>
+
+          <div className="flex flex-1 flex-col gap-2 px-5 pb-2 pt-1">
+            <h3 className="font-display text-lg font-semibold leading-snug transition-colors group-hover:text-brass-light">
               {product.name}
             </h3>
-            <p className="text-sm text-ink-muted line-clamp-2">
+            <p className="line-clamp-2 flex-1 text-sm leading-relaxed text-ink-muted">
               {product.shortDescription}
             </p>
-            <div className="flex items-center justify-between pt-1">
+
+            <div className="flex items-baseline justify-between gap-2 border-t brass-hairline pt-3">
               <Price
                 amount={lowestPrice}
-                className="text-brass font-semibold"
+                className="font-display text-xl font-bold text-brass-light"
               />
-              <span className="text-xs text-ink-muted" dir="ltr">
+              <span className="text-xs text-ink-faint" dir="ltr">
                 {defaultWeight}g
               </span>
             </div>
@@ -116,7 +122,7 @@ export function ProductCard({ product, className, eager }: ProductCardProps) {
         </Link>
 
         {canOrder && (
-          <div className="px-4 pb-4">
+          <div className="px-5 pb-5 pt-3">
             <Button
               variant="secondary"
               size="sm"
@@ -126,8 +132,8 @@ export function ProductCard({ product, className, eager }: ProductCardProps) {
                 addItem(product, defaultWeight);
               }}
             >
-              <ShoppingCart className="h-4 w-4" />
-              أضف إلى السلة
+              <Plus className="h-4 w-4" />
+              أضف للسلة
             </Button>
           </div>
         )}
