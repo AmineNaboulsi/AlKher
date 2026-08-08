@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { CATEGORIES, isVariantInStock, type Product } from "@/lib/products";
 import { ProductCard } from "@/components/product-card";
 import { PromoSection } from "@/components/promo-section";
 import { Footer } from "@/components/footer";
-import { ZelligeDivider } from "@/components/zellige-divider";
+import { PageHeader } from "@/components/page-header";
+import { plates } from "@/lib/media";
 import {
   Select,
   SelectContent,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { SHOW_CATEGORIES } from "@/lib/site-config";
+import { cn } from "@/lib/utils";
 
 type ShopClientProps = {
   products: Product[];
@@ -43,6 +44,7 @@ export function ShopClient({ products, initialCategory }: ShopClientProps) {
   const [sort, setSort] = useState<SortOption>("newest");
   const [inStockOnly, setInStockOnly] = useState(false);
   const [maxPrice, setMaxPrice] = useState(MAX_PRICE);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let result = [...products];
@@ -76,66 +78,78 @@ export function ShopClient({ products, initialCategory }: ShopClientProps) {
     setMaxPrice(MAX_PRICE);
   };
 
+  const isFiltered =
+    category !== "all" || inStockOnly || maxPrice !== MAX_PRICE;
+
   return (
     <>
-      <div className="pt-24 pb-12 sm:pt-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav className="flex items-center gap-2 text-sm text-ink-muted mb-6">
-            <Link href="/" className="hover:text-ink transition-colors">
-              الرئيسية
-            </Link>
-            <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
-            <span className="text-ink">المتجر</span>
-          </nav>
+      <PageHeader
+        plate={plates.shopHeader}
+        kicker="المتجر"
+        title="كل العلب اللي كنوفّرو"
+        blurb="شاي أخضر صيني للأتاي المغربي — بأثمنة المحل، والخلاص عند التوصيل."
+        crumbs={[{ href: "/", label: "الرئيسية" }, { label: "المتجر" }]}
+      />
 
-          <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">
-            المتجر
-          </h1>
-          <p className="text-ink-muted mb-8">
-            {filtered.length} منتج — شاي أخضر صيني للأتاي المغربي
-          </p>
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-10 lg:flex-row">
+          {/* Filters. Collapsed behind a button on phones, where a permanently
+              expanded sidebar would push the grid a full screen down. */}
+          <aside className="lg:w-60 lg:shrink-0">
+            <Button
+              variant="secondary"
+              className="w-full lg:hidden"
+              onClick={() => setFiltersOpen((open) => !open)}
+              aria-expanded={filtersOpen}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              الفلاتر
+              {isFiltered && (
+                <span className="ms-1 h-1.5 w-1.5 rounded-full bg-brass" />
+              )}
+            </Button>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Filters sidebar */}
-            <aside className="lg:w-56 shrink-0 space-y-6">
+            <div
+              className={cn(
+                "mt-4 space-y-7 rounded-2xl border brass-hairline bg-surface p-5 lg:mt-0 lg:sticky lg:top-24",
+                filtersOpen ? "block" : "hidden lg:block"
+              )}
+            >
               {SHOW_CATEGORIES && (
-                <div>
-                  <h2 className="text-sm font-semibold mb-3">الفئة</h2>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={category === "all"}
-                        onChange={() => setCategory("all")}
-                        className="accent-brass"
-                      />
-                      الكل
-                    </label>
-                    {CATEGORIES.map((cat) => (
+                <fieldset className="space-y-3">
+                  <legend className="font-display text-sm font-semibold text-brass">
+                    النوع
+                  </legend>
+                  {[{ value: "all", label: "الكل" }, ...CATEGORIES.map((c) => ({ value: c, label: c }))].map(
+                    (option) => (
                       <label
-                        key={cat}
-                        className="flex items-center gap-2 text-sm cursor-pointer"
+                        key={option.value}
+                        className="flex cursor-pointer items-center gap-2.5 text-sm text-ink-muted transition-colors hover:text-ink"
                       >
                         <input
                           type="radio"
                           name="category"
-                          checked={category === cat}
-                          onChange={() => setCategory(cat)}
+                          checked={category === option.value}
+                          onChange={() => setCategory(option.value)}
                           className="accent-brass"
                         />
-                        {cat}
+                        {option.label}
                       </label>
-                    ))}
-                  </div>
-                </div>
+                    )
+                  )}
+                </fieldset>
               )}
 
-              <div>
-                <h2 className="text-sm font-semibold mb-3">
-                  السعر الأقصى:{" "}
-                  <span dir="ltr">{maxPrice} د.م.</span>
+              <div className="space-y-3">
+                <h2 className="font-display text-sm font-semibold text-brass">
+                  السعر الأقصى
                 </h2>
+                <p
+                  className="font-display text-lg font-bold text-ink"
+                  dir="ltr"
+                >
+                  {maxPrice} د.م.
+                </p>
                 <input
                   type="range"
                   min={20}
@@ -144,67 +158,82 @@ export function ShopClient({ products, initialCategory }: ShopClientProps) {
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
                   className="w-full accent-brass"
+                  aria-label="السعر الأقصى"
                 />
               </div>
 
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2.5 border-t brass-hairline pt-5 text-sm text-ink-muted transition-colors hover:text-ink">
                 <input
                   type="checkbox"
                   checked={inStockOnly}
                   onChange={(e) => setInStockOnly(e.target.checked)}
                   className="accent-brass"
                 />
-                متوفر فقط
+                المتوفر فقط
               </label>
-            </aside>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <Select
-                  value={sort}
-                  onValueChange={(v) => setSort(v as SortOption)}
+              {isFiltered && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                  onClick={resetFilters}
                 >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="ترتيب" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">الأحدث</SelectItem>
-                    <SelectItem value="price-asc">
-                      السعر: من الأقل
-                    </SelectItem>
-                    <SelectItem value="price-desc">
-                      السعر: من الأعلى
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {filtered.length === 0 ? (
-                <div className="text-center py-16 space-y-4">
-                  <p className="text-ink-muted text-lg">
-                    لا توجد نتائج مطابقة — جرّب تعديل الفلاتر
-                  </p>
-                  <Button variant="outline" onClick={resetFilters}>
-                    إعادة ضبط الفلاتر
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filtered.map((product, index) => (
-                    <ProductCard
-                      key={product.slug}
-                      product={product}
-                      eager={index === 0}
-                    />
-                  ))}
-                </div>
+                  إعادة الضبط
+                </Button>
               )}
             </div>
+          </aside>
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b brass-hairline pb-4">
+              <p className="text-sm text-ink-muted">
+                <span className="font-display text-lg font-bold text-ink">
+                  {filtered.length}
+                </span>{" "}
+                منتج
+              </p>
+
+              <Select
+                value={sort}
+                onValueChange={(v) => setSort(v as SortOption)}
+              >
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="ترتيب" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">الأحدث</SelectItem>
+                  <SelectItem value="price-asc">السعر: من الأقل</SelectItem>
+                  <SelectItem value="price-desc">السعر: من الأعلى</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="space-y-4 rounded-2xl border border-dashed brass-hairline py-20 text-center">
+                <p className="text-lg text-ink-muted">
+                  ما لقينا حتى نتيجة — جرّب تبدّل الفلاتر
+                </p>
+                <Button variant="outline" onClick={resetFilters}>
+                  إعادة ضبط الفلاتر
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((product, index) => (
+                  <ProductCard
+                    key={product.slug}
+                    product={product}
+                    eager={index === 0}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
-      <ZelligeDivider variant="compact" />
-      <PromoSection className="pt-0" />
+
+      <PromoSection />
       <Footer />
     </>
   );

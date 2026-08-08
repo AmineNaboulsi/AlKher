@@ -19,11 +19,18 @@ import { deliveryFee } from "@/lib/checkout-config";
 import type { CreateOrderError, CreateOrderSuccess } from "@/lib/orders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Price } from "@/components/price";
 import { Footer } from "@/components/footer";
-import { ZelligeDivider } from "@/components/zellige-divider";
+import { BrassRule, Khatem, SectionKicker } from "@/components/khatem";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { useSiteSettings } from "@/components/site-settings-provider";
+import { plates, productClip, ritual } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
 type Placed = CreateOrderSuccess & { customerName: string; city: string };
@@ -32,6 +39,32 @@ type AdLandingPageProps = {
   product: ProductDocument;
   copy: AdLandingCopy;
 };
+
+const badges = [
+  { icon: Truck, label: "توصيل لكل المدن" },
+  { icon: Banknote, label: "الخلاص عند التوصيل" },
+  { icon: ShieldCheck, label: "منتج أصلي 100%" },
+];
+
+/** The four questions that actually stop a cash-on-delivery order in Morocco. */
+const faq = [
+  {
+    q: "شحال كيدوز باش يوصلني الطلب؟",
+    a: "كنتصلو بيك فنفس النهار باش نأكدو الطلب، والتوصيل عادةً كيدوز ما بين 24 و 72 ساعة حسب المدينة.",
+  },
+  {
+    q: "واش خاصني نخلّص قبل؟",
+    a: "لا. كتخلّص نقداً عند التوصيل، من بعد ما تشوف العلبة بعينيك.",
+  },
+  {
+    q: "واش العلبة أصلية؟",
+    a: "العلبة كما وصلات من المورّد، مغلّفة وما مفتوحاش — ما كنعبّيو حتى شي حاجة من جديد.",
+  },
+  {
+    q: "واش نقدر نبدّل الطلب أو نزيد علب؟",
+    a: "إيه. ملي كنتصلو بيك للتأكيد تقدر تبدّل الوزن أو تزيد علب أخرى قبل الإرسال.",
+  },
+];
 
 export function AdLandingPage({ product, copy }: AdLandingPageProps) {
   const { contactPhone } = useSiteSettings();
@@ -57,11 +90,15 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
   );
   const unitPrice = selectedVariant?.priceMAD ?? 0;
   const canOrder =
-    product.inStock && selectedVariant != null && isVariantInStock(selectedVariant);
+    product.inStock &&
+    selectedVariant != null &&
+    isVariantInStock(selectedVariant);
 
   const deliveryFeeMAD = deliveryFee();
   const subtotal = unitPrice * quantity;
   const total = subtotal + deliveryFeeMAD;
+
+  const clip = productClip(product.slug);
 
   const whatsappHref = useMemo(() => {
     const digits = contactPhone.replace(/\D/g, "");
@@ -107,63 +144,111 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
 
   return (
     <>
-      <div className="pt-16 pb-12">
-        {/* Announcement bar — sits right below the fixed site header, not on top of it */}
-        <div className="bg-brass text-background text-center text-xs sm:text-sm font-medium py-2 px-4">
-          🚚 توصيل لجميع المدن · 💵 الدفع نقداً عند الاستلام
-        </div>
+      {/* Sits directly under the fixed site header rather than over it. */}
+      <div className="mt-18 bg-gradient-to-l from-brass-light to-brass px-4 py-2 text-center text-xs font-semibold text-night sm:text-sm">
+        🚚 توصيل لجميع المدن · 💵 الخلاص عند التوصيل
+      </div>
 
-        {/* Hero */}
-        <div className="warm-wash border-b brass-hairline">
-          <div className="mx-auto max-w-xl px-4 sm:px-6 pt-8 pb-6 text-center">
-            <div className="relative mx-auto aspect-square max-w-sm">
-              <Image
-                src={copy.heroImage}
-                alt={product.name}
-                fill
-                sizes="(min-width: 640px) 24rem, 90vw"
-                className="object-contain"
-                priority
-              />
+      {/* ------------------------------------------------------------ hero */}
+      {/* Dark in both themes: the clip is the ground here, and it is dark. */}
+      <section
+        data-theme="dark"
+        className="relative overflow-hidden border-b brass-hairline bg-night"
+      >
+        <div className="zellige-field pointer-events-none absolute inset-0" />
+
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:py-16">
+          {/* The rendered ad clip, in its native 9:16. Muted, looping and
+              decorative — every claim it makes is repeated in the copy beside
+              it, so a blocked autoplay costs nothing. */}
+          <div className="mx-auto w-full max-w-sm lg:max-w-md">
+            <div className="relative overflow-hidden rounded-3xl border brass-hairline-strong shadow-raised">
+              {clip ? (
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  poster={clip.poster}
+                  aria-hidden="true"
+                  className="aspect-9/16 w-full object-cover"
+                >
+                  <source src={clip.vertical} type="video/mp4" />
+                </video>
+              ) : (
+                <div className="relative aspect-9/16 w-full bg-surface">
+                  <Image
+                    src={copy.heroImage}
+                    alt={product.name}
+                    fill
+                    sizes="(min-width: 1024px) 28rem, 90vw"
+                    className="object-contain p-8"
+                    priority
+                  />
+                </div>
+              )}
             </div>
+          </div>
 
-            <h1 className="font-display text-2xl sm:text-3xl font-bold mt-4 text-balance">
+          <div className="space-y-6 text-start">
+            <SectionKicker>{product.category}</SectionKicker>
+
+            <h1 className="font-display text-3xl font-bold leading-tight text-balance sm:text-4xl lg:text-5xl">
               {copy.headline}
             </h1>
-            <p className="text-ink-muted mt-2 leading-relaxed">
+
+            <p className="text-lg leading-relaxed text-ink-muted text-pretty">
               {copy.subheadline}
             </p>
+
+            <ul className="space-y-3">
+              {copy.bullets.map((bullet) => (
+                <li key={bullet} className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-mint" />
+                  <span className="leading-relaxed text-ink">{bullet}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <Button asChild variant="brass" size="xl">
+                <a href="#order">اطلب الآن — {total} د.م.</a>
+              </Button>
+              <span className="text-sm text-ink-muted">
+                الخلاص عند التوصيل
+              </span>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Trust badges */}
-        <div className="mx-auto max-w-xl px-4 sm:px-6 mt-6">
-          <div className="grid grid-cols-3 gap-2 text-center text-xs text-ink-muted">
-            <div className="flex flex-col items-center gap-1.5 rounded-lg border brass-hairline bg-surface py-3">
-              <Truck className="h-5 w-5 text-brass" />
-              توصيل لكل المدن
-            </div>
-            <div className="flex flex-col items-center gap-1.5 rounded-lg border brass-hairline bg-surface py-3">
-              <Banknote className="h-5 w-5 text-brass" />
-              الدفع عند الاستلام
-            </div>
-            <div className="flex flex-col items-center gap-1.5 rounded-lg border brass-hairline bg-surface py-3">
-              <ShieldCheck className="h-5 w-5 text-brass" />
-              منتج أصلي 100%
-            </div>
-          </div>
-        </div>
+      {/* ---------------------------------------------------------- badges */}
+      <div className="border-b brass-hairline bg-surface">
+        <ul className="mx-auto grid max-w-4xl grid-cols-3 gap-px px-4 sm:px-6">
+          {badges.map(({ icon: Icon, label }) => (
+            <li
+              key={label}
+              className="flex flex-col items-center gap-2 py-5 text-center text-xs text-ink-muted sm:flex-row sm:justify-center sm:text-sm"
+            >
+              <Icon className="h-5 w-5 text-brass" />
+              {label}
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        {/* Order panel */}
-        <div className="mx-auto max-w-xl px-4 sm:px-6 mt-8">
+      {/* ----------------------------------------------------------- order */}
+      <section id="order" className="page-wash py-14 sm:py-20">
+        <div className="mx-auto max-w-xl px-4 sm:px-6">
           {placed ? (
-            <div className="rounded-lg border brass-hairline bg-surface p-8 space-y-6 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-mint/10 text-mint">
+            <div className="space-y-6 rounded-3xl border brass-hairline bg-surface p-8 text-center shadow-card">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-mint/15 text-mint ring-1 ring-inset ring-mint/30">
                 <BadgeCheck className="h-8 w-8" />
               </div>
               <div className="space-y-2">
                 <h2 className="font-display text-2xl font-bold">
-                  تم تسجيل طلبك، {placed.customerName}
+                  تسجّل الطلب ديالك، {placed.customerName}
                 </h2>
                 <p className="text-ink-muted">
                   رقم الطلب:{" "}
@@ -172,40 +257,34 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
                   </span>
                 </p>
               </div>
-              <p className="text-ink-muted leading-relaxed">
-                سنتصل بك على الرقم الذي أدخلته لتأكيد الطلب قبل الإرسال إلى{" "}
-                {placed.city}. الدفع نقداً عند الاستلام.
+              <p className="leading-relaxed text-ink-muted">
+                غادي نتصلو بيك على الرقم اللي دخّلتي باش نأكدو الطلب قبل ما
+                نصيفطوه لـ{placed.city}. الخلاص نقداً عند التوصيل.
               </p>
-              <div className="flex justify-between border-t brass-hairline pt-4 font-semibold max-w-xs mx-auto">
-                <span>المبلغ المطلوب عند الاستلام</span>
-                <Price amount={placed.totalMAD} className="text-brass" />
+              <div className="mx-auto flex max-w-xs justify-between border-t brass-hairline pt-4 font-semibold">
+                <span>المبلغ عند التوصيل</span>
+                <Price amount={placed.totalMAD} className="text-brass-light" />
               </div>
             </div>
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="rounded-lg border brass-hairline bg-surface p-5 sm:p-6 space-y-5 text-start"
+              className="space-y-6 rounded-3xl border brass-hairline bg-surface p-6 text-start shadow-card sm:p-8"
               noValidate
             >
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="font-display text-lg font-semibold">
-                  {product.name}
+              <div className="space-y-1">
+                <h2 className="flex items-center gap-2.5 font-display text-xl font-bold">
+                  <Khatem className="h-4 w-4 text-brass" strokeWidth={8} />
+                  عمّر المعلومات ديالك
                 </h2>
-                {product.inStock ? (
-                  <span className="text-xs rounded-full bg-mint/10 text-mint px-2.5 py-0.5">
-                    متوفر
-                  </span>
-                ) : (
-                  <span className="text-xs rounded-full bg-surface-raised text-ink-muted px-2.5 py-0.5">
-                    نفد المخزون
-                  </span>
-                )}
+                <p className="text-sm text-ink-muted">
+                  {product.name} — كنتصلو بيك للتأكيد قبل الإرسال.
+                </p>
               </div>
 
-              {/* Weight selector */}
               {product.variants.length > 1 && (
-                <div>
-                  <p className="text-sm font-medium mb-2">الوزن</p>
+                <div className="space-y-2.5">
+                  <p className="text-sm font-medium">الوزن</p>
                   <div className="flex flex-wrap gap-2">
                     {product.variants.map((v) => {
                       const available = isVariantInStock(v);
@@ -215,13 +294,14 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
                           type="button"
                           disabled={!available}
                           onClick={() => setSelectedWeight(v.weightGrams)}
+                          aria-pressed={selectedWeight === v.weightGrams}
                           className={cn(
-                            "rounded-md border px-4 py-2 text-sm transition-colors",
+                            "rounded-full border px-5 py-2 text-sm transition-all",
                             !available
-                              ? "border-border text-ink-muted/50 line-through cursor-not-allowed"
+                              ? "cursor-not-allowed border-border text-ink-faint line-through"
                               : selectedWeight === v.weightGrams
-                                ? "border-brass bg-brass/10 text-brass"
-                                : "border-border text-ink-muted hover:border-brass/50"
+                                ? "border-brass bg-brass/15 font-semibold text-brass-light"
+                                : "border-border text-ink-muted hover:border-brass/50 hover:text-ink"
                           )}
                         >
                           <span dir="ltr">
@@ -236,25 +316,27 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
                 </div>
               )}
 
-              {/* Quantity */}
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">الكمية</p>
-                <div className="inline-flex items-center border brass-hairline rounded-md">
+                <div className="inline-flex items-center rounded-full border brass-hairline bg-surface-raised">
                   <button
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="p-2 hover:bg-surface-raised transition-colors"
+                    className="rounded-full p-2.5 transition-colors hover:text-brass"
                     aria-label="تقليل"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
-                  <span className="w-10 text-center" dir="ltr">
+                  <span
+                    className="w-10 text-center font-display font-semibold"
+                    dir="ltr"
+                  >
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity(quantity + 1)}
-                    className="p-2 hover:bg-surface-raised transition-colors"
+                    className="rounded-full p-2.5 transition-colors hover:text-brass"
                     aria-label="زيادة"
                   >
                     <Plus className="h-4 w-4" />
@@ -262,15 +344,38 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
                 </div>
               </div>
 
-              <div className="flex items-baseline justify-between border-t brass-hairline pt-4">
-                <span className="text-sm text-ink-muted">السعر</span>
-                <Price amount={subtotal} className="text-2xl font-bold text-brass" />
-              </div>
+              <dl className="space-y-2 border-t brass-hairline pt-4 text-sm">
+                <div className="flex justify-between text-ink-muted">
+                  <dt>المنتج</dt>
+                  <dd>
+                    <Price amount={subtotal} />
+                  </dd>
+                </div>
+                <div className="flex justify-between text-ink-muted">
+                  <dt>التوصيل</dt>
+                  <dd>
+                    {deliveryFeeMAD > 0 ? (
+                      <Price amount={deliveryFeeMAD} />
+                    ) : (
+                      "مجاناً"
+                    )}
+                  </dd>
+                </div>
+                <div className="flex items-baseline justify-between border-t brass-hairline pt-3">
+                  <dt className="font-medium text-ink">المجموع</dt>
+                  <dd>
+                    <Price
+                      amount={total}
+                      className="font-display text-2xl font-bold text-brass-light"
+                    />
+                  </dd>
+                </div>
+              </dl>
 
               {formError && (
                 <p
                   role="alert"
-                  className="rounded-md border border-clay/40 bg-clay/5 px-4 py-3 text-sm text-clay"
+                  className="rounded-xl border border-clay/40 bg-clay/10 px-4 py-3 text-sm text-clay"
                 >
                   {formError}
                 </p>
@@ -278,7 +383,10 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="fullName" className="block text-sm font-medium">
+                  <label
+                    htmlFor="fullName"
+                    className="block text-sm font-medium"
+                  >
                     الاسم الكامل
                   </label>
                   <Input
@@ -341,7 +449,7 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
               <Button
                 type="submit"
                 variant="brass"
-                size="lg"
+                size="xl"
                 className="w-full"
                 disabled={submitting || !canOrder}
               >
@@ -352,53 +460,163 @@ export function AdLandingPage({ product, copy }: AdLandingPageProps) {
                     ? "جارٍ التسجيل…"
                     : `اطلب الآن — ${total} د.م.`}
               </Button>
+
+              <p className="text-center text-xs text-ink-faint">
+                ما كتخلّص والو دابا — غير ملي توصلك العلبة.
+              </p>
             </form>
           )}
         </div>
+      </section>
 
-        <ZelligeDivider variant="compact" />
+      {/* ------------------------------------------------------ description */}
+      <section className="border-y brass-hairline bg-surface py-14 sm:py-20">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16">
+          <figure className="relative aspect-4/3 overflow-hidden rounded-2xl border brass-hairline">
+            <Image
+              src={plates.quality}
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="object-cover"
+            />
+          </figure>
 
-        {/* Description + bullets */}
-        <div className="mx-auto max-w-xl px-4 sm:px-6 space-y-6 text-start">
-          <h2 className="font-display text-xl font-semibold">الوصف</h2>
-          <p className="text-ink-muted leading-relaxed">{product.description}</p>
-
-          <ul className="space-y-3">
-            {copy.bullets.map((bullet) => (
-              <li key={bullet} className="flex items-start gap-2.5">
-                <CheckCircle2 className="h-5 w-5 shrink-0 text-mint mt-0.5" />
-                <span className="text-ink-muted">{bullet}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <ZelligeDivider variant="compact" />
-
-        {/* COD "guarantee" band */}
-        <div className="mx-auto max-w-xl px-4 sm:px-6">
-          <div className="rounded-lg bg-ink text-background p-6 sm:p-8 text-center space-y-3">
-            <h2 className="font-display text-xl sm:text-2xl font-bold">
-              ما تدفعش حتى توصلك السلعة
+          <div className="space-y-5 text-start">
+            <SectionKicker>على المنتج</SectionKicker>
+            <h2 className="font-display text-2xl font-bold leading-tight text-balance sm:text-3xl">
+              {product.name}
             </h2>
-            <p className="text-background/70 leading-relaxed">
-              تؤكّد الطلب الآن، ونتواصل معك هاتفياً لتأكيد التفاصيل، ثم نوصّل
-              طلبك إلى باب المنزل — وتدفع نقداً فقط عند الاستلام بعد التأكد من
-              المنتج. بدون مخاطرة، بدون دفع مسبق.
+            <p className="leading-relaxed text-ink-muted text-pretty">
+              {product.description}
             </p>
+            <ul className="flex flex-wrap gap-2 pt-1">
+              {product.flavorNotes.map((note) => (
+                <li
+                  key={note}
+                  className="rounded-full border brass-hairline bg-surface-raised px-4 py-1.5 text-sm text-ink-muted"
+                >
+                  {note}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* --------------------------------------------------------- ritual */}
+      <section className="py-14 sm:py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <SectionKicker>طريقة التحضير</SectionKicker>
+            <h2 className="font-display text-2xl font-bold sm:text-3xl">
+              باش يخرج ليك الطعم كامل
+            </h2>
+          </div>
+
+          <ol className="mt-10 grid gap-6 sm:grid-cols-3">
+            {ritual.map((step) => (
+              <li
+                key={step.step}
+                className="space-y-3 rounded-2xl border brass-hairline bg-surface p-6"
+              >
+                <span
+                  className="font-display text-3xl font-bold text-brass/40"
+                  dir="ltr"
+                >
+                  {step.step}
+                </span>
+                <h3 className="font-display text-lg font-semibold">
+                  {step.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-ink-muted">
+                  {step.body}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------- guarantee */}
+      {/* Dark in both themes — the plate behind it is a dark photograph. */}
+      <section data-theme="dark" className="relative isolate overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <Image
+            src={plates.ctaBand}
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-night/55" />
+        </div>
+
+        <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-4 py-20 text-center sm:px-6">
+          <BrassRule className="w-32" />
+          <h2 className="font-display text-2xl font-bold text-balance sm:text-3xl">
+            ما تخلّصش حتى توصلك السلعة
+          </h2>
+          <p className="leading-relaxed text-ink-muted text-pretty">
+            كتأكد الطلب دابا، كنتصلو بيك هاتفياً باش نأكدو التفاصيل، ومن بعد
+            كنوصلو الطلب حتى لباب الدار — وكتخلّص نقداً غير ملي تشوف المنتج.
+            بلا مخاطرة، وبلا خلاص مسبق.
+          </p>
+          <Button asChild variant="brass" size="xl" className="mt-2">
+            <a href="#order">اطلب الآن</a>
+          </Button>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ faq */}
+      <section className="py-14 sm:py-20">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6">
+          <div className="mb-8 flex flex-col items-center gap-3 text-center">
+            <SectionKicker>أسئلة متكررة</SectionKicker>
+            <h2 className="font-display text-2xl font-bold sm:text-3xl">
+              واش بقى شي سؤال؟
+            </h2>
+          </div>
+
+          <Accordion type="single" collapsible className="border-t brass-hairline">
+            {faq.map((item, index) => (
+              <AccordionItem key={item.q} value={`faq-${index}`}>
+                <AccordionTrigger>{item.q}</AccordionTrigger>
+                <AccordionContent>{item.a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
 
       <Footer />
 
-      {/* Floating WhatsApp contact */}
+      {/* Sticky order bar — a paid visitor lands mid-page as often as at the
+          top, and this keeps the price and the CTA one tap away. Hidden once
+          the order is placed. */}
+      {!placed && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t brass-hairline glass px-4 py-3 sm:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-xs text-ink-muted">{product.name}</p>
+              <Price
+                amount={total}
+                className="font-display text-xl font-bold text-brass-light"
+              />
+            </div>
+            <Button asChild variant="brass" size="lg">
+              <a href="#order">اطلب الآن</a>
+            </Button>
+          </div>
+        </div>
+      )}
+
       <a
         href={whatsappHref}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="تواصل معنا على واتساب"
-        className="fixed bottom-5 end-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-mint text-background shadow-card hover:bg-mint-deep transition-colors"
+        className="fixed bottom-24 end-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-mint text-night shadow-[0_10px_30px_rgba(63,203,147,0.3)] transition-colors hover:bg-mint-deep hover:text-ink sm:bottom-6"
       >
         <WhatsAppIcon className="h-7 w-7" />
       </a>

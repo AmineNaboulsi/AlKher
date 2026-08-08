@@ -2,26 +2,44 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
+import { clips, plates } from "@/lib/media";
+import { cn } from "@/lib/utils";
+
+type Cut = "wide" | "tall";
 
 /**
- * Hero background clip. Playback is driven from an effect rather than the
- * `autoPlay` attribute so `prefers-reduced-motion` keeps it on the poster frame.
+ * The hero's ambient clip, rendered by the Remotion studio (`Alkhayr-HeroLoop`)
+ * and cut two ways — 16:9 and 9:16. Which one loads is decided on the client
+ * *after* mount, so a phone never downloads the desktop cut and vice versa;
+ * until then, and whenever motion is reduced, the poster plate stands in.
+ *
+ * The clip is decoration: it is `aria-hidden`, silent, and everything it says
+ * is also said in the copy over it.
  */
-export function HeroVideo() {
+export function HeroVideo({ className }: { className?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [cut, setCut] = useState<Cut | null>(null);
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const wide = window.matchMedia("(min-width: 768px)");
+    const apply = () => setCut(wide.matches ? "wide" : "tall");
+    apply();
+    wide.addEventListener("change", apply);
+    return () => wide.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !cut) return;
 
     video
       .play()
       .then(() => setPlaying(true))
       .catch(() => setPlaying(false));
-  }, []);
+  }, [cut]);
 
   const toggle = () => {
     const video = videoRef.current;
@@ -39,30 +57,54 @@ export function HeroVideo() {
   };
 
   return (
-    <figure className="relative w-full">
-      <div className="relative overflow-hidden rounded-2xl border brass-hairline bg-surface-raised shadow-card">
+    <div className={cn("absolute inset-0 overflow-hidden", className)}>
+      {/* Always painted: the poster is the LCP element, and it is what stays
+          on screen for reduced-motion visitors. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={cut === "tall" ? plates.heroTall : plates.heroWide}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+        fetchPriority="high"
+      />
+
+      {cut && (
         <video
+          key={cut}
           ref={videoRef}
           muted
           loop
           playsInline
-          preload="metadata"
-          poster="/video/moroccan-tea-poster.jpg"
-          className="aspect-[4/3] w-full object-cover"
-          aria-label="تحضير الأتاي على الفحم في الصحراء المغربية"
+          preload="auto"
+          aria-hidden="true"
+          poster={cut === "tall" ? clips.heroTall.poster : clips.hero.poster}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover transition-opacity duration-1000",
+            playing ? "opacity-100" : "opacity-0"
+          )}
         >
-          <source src="/video/moroccan-tea.webm" type="video/webm" />
-          متصفحك لا يدعم تشغيل الفيديو.
+          {cut === "wide" && (
+            <source src={clips.hero.webm} type="video/webm" />
+          )}
+          <source
+            src={cut === "tall" ? clips.heroTall.mp4 : clips.hero.mp4}
+            type="video/mp4"
+          />
         </video>
+      )}
 
-        {/* Warm edge so the clip settles into the white page. */}
-        <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-brass/15" />
+      {/* Legibility ramps. The plate already carries a soft one; these two
+          guarantee the headline holds up over any frame of the loop. */}
+      <div className="pointer-events-none absolute inset-0 scrim-bottom" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-night/70 via-night/25 to-transparent" />
 
+      {cut && (
         <button
           type="button"
           onClick={toggle}
           aria-label={playing ? "إيقاف الفيديو" : "تشغيل الفيديو"}
-          className="absolute bottom-3 end-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/85 text-ink backdrop-blur-sm border brass-hairline transition-colors hover:bg-background"
+          className="absolute bottom-6 end-6 z-20 flex h-10 w-10 items-center justify-center rounded-full border brass-hairline glass text-ink/80 transition-colors hover:text-brass-light"
         >
           {playing ? (
             <Pause className="h-4 w-4" />
@@ -70,20 +112,7 @@ export function HeroVideo() {
             <Play className="h-4 w-4" />
           )}
         </button>
-      </div>
-
-      <figcaption className="mt-3 text-xs text-ink-muted">
-        فيديو: تحضير الأتاي على الفحم — مصطفى ملو، ويكيميديا كومنز،{" "}
-        <a
-          href="https://creativecommons.org/licenses/by-sa/4.0"
-          className="underline decoration-brass/40 hover:text-ink transition-colors"
-          rel="license noopener noreferrer"
-          target="_blank"
-          dir="ltr"
-        >
-          CC BY-SA 4.0
-        </a>
-      </figcaption>
-    </figure>
+      )}
+    </div>
   );
 }

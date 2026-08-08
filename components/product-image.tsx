@@ -1,6 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import type { Product } from "@/lib/products";
 import { ProductPlaceholder } from "@/components/product-placeholder";
+import { useTheme } from "@/components/theme-provider";
+import { packPlate } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
 type ProductImageProps = {
@@ -17,7 +21,12 @@ export function ProductImage({
   sizes = "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw",
   eager = false,
 }: ProductImageProps) {
-  const src = product.images[0];
+  const theme = useTheme();
+
+  // Prefer the rendered plate: same crop, same light, same ground for every
+  // product, graded for whichever theme is running. Falls back to the uploaded
+  // photo for anything without one.
+  const src = packPlate(product.slug, theme) ?? product.images[0];
 
   if (!src) {
     return (

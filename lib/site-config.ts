@@ -1,3 +1,5 @@
+import type { Theme } from "@/lib/theme";
+
 /**
  * Static site flags.
  *
@@ -6,6 +8,30 @@
  * from the bundle and the catalogue routes are absent from the build output
  * entirely when disabled.
  */
+
+/**
+ * Theme for the storefront: home, shop, product pages, cart, checkout.
+ *
+ * "dark" is the night-souk treatment the photography was graded for; "light"
+ * is the warm-parchment daytime version of the same design — same layout, same
+ * components, same brass, different ground.
+ */
+export const STORE_THEME: Theme = "dark";
+
+/**
+ * Theme for the `/lp/*` ad landing pages, set separately on purpose: paid
+ * traffic behaves differently from someone browsing the shop, and which ground
+ * converts better is worth testing rather than assuming.
+ */
+export const LANDING_THEME: Theme = "dark";
+
+/**
+ * Show the on-page theme switcher and honour `?theme=` on the URL.
+ *
+ * Leave this on while deciding; turn it off for a public launch so a visitor
+ * can't land on the version you didn't design the campaign around.
+ */
+export const ALLOW_THEME_PREVIEW = true;
 
 /**
  * Show the product catalogue: the shop listing, individual product pages, the
